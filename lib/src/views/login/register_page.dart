@@ -45,7 +45,6 @@ class RegisterPage extends GetWidget<AuthCtl> {
                     onPressed: validate,
                     child: Text(
                       'Sign Up',
-                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
