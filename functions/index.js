@@ -17,7 +17,6 @@ initializeApp();
 
 // Create a new User object in Firestore when a user signs up
 exports.setupNewUser = functions.auth.user().onCreate((user) => {
-  logger.info(`New user creating: ${user.uid}`);
   const res = getFirestore().
       collection("users").
       doc(user.uid).
