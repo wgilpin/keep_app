@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/display_note.dart';
@@ -7,8 +8,9 @@ class NoteCard extends StatelessWidget {
   final Note _note;
   final int? _maxlines;
   final bool showTitle;
+  final bool showHtml;
 
-  const NoteCard(this._note, this._maxlines, {this.showTitle = true, super.key});
+  const NoteCard(this._note, this._maxlines, {this.showTitle = true, this.showHtml = false, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class NoteCard extends StatelessWidget {
                 ),
               ),
               Visibility(
-                visible: _note.snippet != null,
+                visible: (!showHtml) & (_note.snippet != null),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
@@ -54,6 +56,15 @@ class NoteCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 16),
                   ),
                 ),
+              ),
+              Visibility(
+                visible: (showHtml) & (_note.snippet ?? "").isNotEmpty,
+                child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      decoration: BoxDecoration(color: Colors.yellow[100]),
+                      child: Html(data: _note.snippet ?? ""),
+                    )),
               ),
             ],
           ),

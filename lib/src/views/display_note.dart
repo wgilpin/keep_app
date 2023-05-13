@@ -49,6 +49,7 @@ class _DisplayNoteState extends State<DisplayNote> {
               widget._note,
               null,
               showTitle: false,
+              showHtml: true,
             ),
           ),
         ],

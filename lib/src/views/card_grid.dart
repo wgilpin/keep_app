@@ -21,7 +21,11 @@ class CardGrid extends StatelessWidget {
           return Container(
             // constraints: const BoxConstraints(maxHeight: 300,),
             padding: const EdgeInsets.all(8.0),
-            child: NoteCard(_notes[index], 20),
+            child: NoteCard(
+              _notes[index],
+              20,
+              showHtml: true,
+            ),
           );
         },
       ),
