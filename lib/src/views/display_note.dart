@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/firestore_db.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/note_card.dart';
 
 class DisplayNote extends StatefulWidget {
   DisplayNote(Note note, {super.key}) : _note = note;
@@ -28,9 +29,11 @@ class _DisplayNoteState extends State<DisplayNote> {
                     if (updatedNoteID != null) {
                       // note has been updates, reload it
                       final note = await getNote(updatedNoteID);
-                      setState(() async {
-                        widget._note = note;
-                      });
+                      setState(
+                        () async {
+                          widget._note = note;
+                        },
+                      );
                     }
                   },
                 );
@@ -38,55 +41,17 @@ class _DisplayNoteState extends State<DisplayNote> {
               icon: const Icon(Icons.edit))
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Visibility(
-              visible: widget._note.title != null,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SelectableText(
-                  widget._note.title ?? "Untitled",
-                  style: const TextStyle(fontSize: 24),
-                ),
-              ),
+      body: Wrap(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: NoteCard(
+              widget._note,
+              null,
+              showTitle: false,
             ),
-            Visibility(
-              visible: widget._note.comment != null,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SelectableText(
-                  widget._note.comment ?? "",
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-            Visibility(
-              visible: widget._note.snippet != null,
-              child: Container(
-                color: Colors.yellow[600],
-                width: double.infinity,
-                padding: const EdgeInsets.all(8.0),
-                child: SelectableText(
-                  widget._note.snippet ?? "",
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-            Visibility(
-              visible: widget._note.url != null,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SelectableText(
-                  widget._note.url ?? "",
-                  style: TextStyle(fontSize: 16, color: Colors.blue[800], decoration: TextDecoration.underline),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

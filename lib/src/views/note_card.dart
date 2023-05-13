@@ -5,8 +5,10 @@ import 'package:keep_app/src/views/display_note.dart';
 
 class NoteCard extends StatelessWidget {
   final Note _note;
+  final int? _maxlines;
+  final bool showTitle;
 
-  const NoteCard(this._note, {super.key});
+  const NoteCard(this._note, this._maxlines, {this.showTitle = true, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +22,7 @@ class NoteCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Visibility(
-                visible: _note.title != null,
+                visible: showTitle & (_note.title != null),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
@@ -34,6 +36,8 @@ class NoteCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
+                    // maxLines: _maxlines,
+                    overflow: TextOverflow.ellipsis,
                     _note.comment ?? "",
                     style: const TextStyle(fontSize: 16),
                   ),
@@ -44,6 +48,8 @@ class NoteCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
+                    maxLines: _maxlines,
+                    overflow: TextOverflow.ellipsis,
                     _note.snippet ?? "",
                     style: const TextStyle(fontSize: 16),
                   ),

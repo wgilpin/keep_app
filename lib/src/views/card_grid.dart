@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/note_card.dart';
 
@@ -10,17 +11,17 @@ class CardGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GridView.builder(
-        shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 300,
-          childAspectRatio: (1 / .7),
-        ),
+      body: MasonryGridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
         itemCount: _notes.length,
-        itemBuilder: (BuildContext ctx, index) {
+        clipBehavior: Clip.hardEdge,
+        itemBuilder: (context, index) {
           return Container(
+            // constraints: const BoxConstraints(maxHeight: 300,),
             padding: const EdgeInsets.all(8.0),
-            child: NoteCard(_notes[index]),
+            child: NoteCard(_notes[index], 20),
           );
         },
       ),
