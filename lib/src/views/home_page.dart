@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: const Text("Loading"));
+            return const Scaffold(body: Text("Loading"));
           }
 
           return Scaffold(

@@ -126,12 +126,12 @@ class _EditNoteFormState extends State<EditNoteForm> {
                   onPressed: () {
                     // Validate returns true if the form is valid, or false otherwise.
                     if (_formKey.currentState!.validate()) {
-                      final html_snippet = _snippetCtl.text.split('\n').map((line) => '$line<br/>').join();
+                      final htmlSnippet = _snippetCtl.text.split('\n').map((line) => '$line<br/>').join();
                       _onSave({
                         if (widget._note.id != null) 'id': widget._note.id!,
                         'title': _titleCtl.text,
                         'comment': _commentCtl.text,
-                        'snippet': html_snippet,
+                        'snippet': htmlSnippet,
                         'url': _urlCtl.text
                       });
                     }

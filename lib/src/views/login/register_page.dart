@@ -12,6 +12,8 @@ class RegisterPage extends GetWidget<AuthCtl> {
   final TextEditingController passwordCtl = TextEditingController();
   final TextEditingController passwordCtl2 = TextEditingController();
 
+  RegisterPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
