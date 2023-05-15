@@ -5,7 +5,7 @@ import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/notes.dart';
 
 class EditNoteForm extends StatefulWidget {
-  final Note _note;
+  final Note? _note;
 
   const EditNoteForm(this._note, {super.key});
 
@@ -23,10 +23,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
   @override
   void initState() {
     super.initState();
-    _titleCtl = TextEditingController(text: widget._note.title);
-    _commentCtl = TextEditingController(text: widget._note.comment);
-    _snippetCtl = TextEditingController(text: widget._note.snippet);
-    _urlCtl = TextEditingController(text: widget._note.url);
+    _titleCtl = TextEditingController(text: widget._note?.title);
+    _commentCtl = TextEditingController(text: widget._note?.comment);
+    _snippetCtl = TextEditingController(text: widget._note?.snippet);
+    _urlCtl = TextEditingController(text: widget._note?.url);
   }
 
   void _onSave(Map<String, Object> note) async {
@@ -37,15 +37,45 @@ class _EditNoteFormState extends State<EditNoteForm> {
     if (note.containsKey("id")) {
       id = note["id"].toString();
       note.remove("id");
+      note = cleanFields(note);
       await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
     } else {
       final uid = Get.find<AuthCtl>().user!.uid;
+      note = cleanFields(note);
       note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
       note["created"] = DateTime.now().toUtc();
       var ref = await FirebaseFirestore.instance.collection('notes').add(note);
       id = ref.id;
     }
     Get.back(result: id);
+  }
+
+  Map<String, Object> cleanFields(Map<String, Object> note) {
+    if (note["snippet"] == "<br/>") {
+      note["snippet"] = "";
+    }
+    if (note["comment"] == "<br/>") {
+      note["comment"] = "";
+    }
+    return note;
+  }
+
+  String replaceNewlinesWithBreaks(String text) {
+    List<String> lines = text.split('\n');
+
+    if (lines.last.isEmpty) {
+      lines.removeLast(); // This will remove the last empty line if it exists
+    }
+
+    if (lines.length == 1) {
+      return lines.first;
+    }
+
+    // Join all lines with <br/>, excluding the last line
+    String newText = lines.sublist(0, lines.length - 1).join('<br/>');
+
+    // Add the last line without <br/>
+    return '$newText<br/>${lines.last}';
   }
 
   @override
@@ -126,7 +156,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
                   onPressed: () {
                     // Validate returns true if the form is valid, or false otherwise.
                     if (_formKey.currentState!.validate()) {
-                      final htmlSnippet = _snippetCtl.text.split('\n').map((line) => '$line<br/>').join();
+                      final htmlSnippet = replaceNewlinesWithBreaks(_snippetCtl.text);
                       _onSave({
                         if (widget._note.id != null) 'id': widget._note.id!,
                         'title': _titleCtl.text,

@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/views/display_note.dart';
 import 'package:keep_app/src/views/note_card.dart';
 
 class CardGrid extends StatelessWidget {
-  const CardGrid(List<Note> notes, {super.key}) : _notes = notes;
+  CardGrid(List<Note> notes, this.onUpdate, {super.key}) : _notes = notes;
 
+  Function()? onUpdate;
   final List<Note> _notes;
+
+  onNoteTapped(note) {
+    print("CardGrid.onNoteTapped");
+    Get.to(DisplayNote(note, onUpdate));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +32,7 @@ class CardGrid extends StatelessWidget {
             child: NoteCard(
               _notes[index],
               20,
+              onTapped: () => onNoteTapped(_notes[index]),
               showHtml: true,
             ),
           );

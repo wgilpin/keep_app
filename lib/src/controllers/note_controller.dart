@@ -23,7 +23,7 @@ class NoteController extends GetxController {
           notes.add(Note.fromSnapshot(note));
         }
         isLoading.value = false;
-        update();
+        notes.refresh();
       } else {
         Get.snackbar("Error Loading", "User not logged in");
       }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/controllers/note_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/card_grid.dart';
@@ -13,6 +12,11 @@ class HomePage extends StatelessWidget {
   final nc = Get.put(NoteController());
 
   final TextEditingController _searchController = TextEditingController();
+
+  void changed() {
+    print("Homepage.changed");
+    nc.getData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,8 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Obx(() => nc.isLoading.value ? const CircularProgressIndicator() : SafeArea(child: CardGrid(nc.notes))),
+        child: Obx(() =>
+            nc.isLoading.value ? const CircularProgressIndicator() : SafeArea(child: CardGrid(nc.notes, changed))),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -64,7 +69,8 @@ class HomePage extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.yellow[700],
-        selectedItemColor: Colors.amber[900],
+        selectedItemColor: Colors.brown[900],
+        unselectedItemColor: Colors.grey[500],
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

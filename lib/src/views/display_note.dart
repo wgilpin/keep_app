@@ -5,9 +5,10 @@ import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/note_card.dart';
 
 class DisplayNote extends StatefulWidget {
-  DisplayNote(Note note, {super.key}) : _note = note;
+  DisplayNote(Note note, this.onChanged, {super.key}) : _note = note;
 
   Note _note;
+  Function? onChanged;
 
   @override
   State<DisplayNote> createState() => _DisplayNoteState();
@@ -28,10 +29,13 @@ class _DisplayNoteState extends State<DisplayNote> {
                       // note has been updates, reload it
                       final note = await getNote(updatedNoteID);
                       setState(
-                        () async {
+                        () {
                           widget._note = note;
                         },
                       );
+                      // if the parent widget supplied a callback, call it
+                      print("DisplayNote.onPressed");
+                      widget.onChanged?.call();
                     }
                   },
                 );
