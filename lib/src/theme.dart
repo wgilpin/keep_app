@@ -6,7 +6,10 @@ ThemeData makeTheme() {
     // Define the default brightness and colors.
     brightness: Brightness.light,
     scaffoldBackgroundColor: Colors.yellow[800],
-
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      foregroundColor: Colors.yellow[200],
+      backgroundColor: Colors.brown[900],
+    ),
     // Define the default font family.
     fontFamily: 'Georgia',
 
