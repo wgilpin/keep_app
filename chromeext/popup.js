@@ -26,8 +26,8 @@ window.addEventListener('message', function(event) {
 });
 
 function setIframeUrl(url, selectedText, title) {
-  let keepIFrame = document.getElementById("iframe");
   // add comment to the iframe url as a query param
+  let keepIFrame = document.getElementById("iframe");
   let params = {
     url: url,
     snippet: selectedText,

@@ -6,8 +6,17 @@ import 'package:keep_app/src/notes.dart';
 
 class EditNoteForm extends StatefulWidget {
   final Note? _note;
+  final String? title;
+  final String? snippet;
+  final String? comment;
+  final String? url;
 
-  const EditNoteForm(this._note, {super.key});
+  /// EditNoteForm constructor
+  ///
+  /// If the note is not null, then we are editing an existing note.
+  /// If the note is null, then we are creating a new note.
+  /// If you supply title / comment / snippet / url they will be used as the default values in the form.
+  const EditNoteForm(this._note, {this.title, this.comment, this.snippet, this.url, super.key});
 
   @override
   State<EditNoteForm> createState() => _EditNoteFormState();
@@ -23,33 +32,49 @@ class _EditNoteFormState extends State<EditNoteForm> {
   @override
   void initState() {
     super.initState();
+    // if we are editing an existing note, then populate the form with the existing values
     _titleCtl = TextEditingController(text: widget._note?.title);
     _commentCtl = TextEditingController(text: widget._note?.comment);
     _snippetCtl = TextEditingController(text: widget._note?.snippet);
     _urlCtl = TextEditingController(text: widget._note?.url);
+
+    // if we are creating a new note, then populate the form with the supplied values
+    _titleCtl.text = widget.title ?? _titleCtl.text;
+    _commentCtl.text = widget.comment ?? _commentCtl.text;
+    _snippetCtl.text = widget.snippet ?? _snippetCtl.text;
+    _urlCtl.text = widget.url ?? _urlCtl.text;
   }
 
-  void _onSave(Map<String, Object> note) async {
+  void _saveNoteToFirebase(Map<String, Object> note) async {
     // if note has the key "id", add 1
     // else add the note
 
     late String id;
     if (note.containsKey("id")) {
+      // update existing note
       id = note["id"].toString();
+
+      // remove the id from the note, as firebase uses it as a doc reference
       note.remove("id");
       note = cleanFields(note);
       await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
     } else {
+      // add new note
       final uid = Get.find<AuthCtl>().user!.uid;
       note = cleanFields(note);
+
+      // add in the user(owner) and created fields
       note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
       note["created"] = DateTime.now().toUtc();
       var ref = await FirebaseFirestore.instance.collection('notes').add(note);
       id = ref.id;
     }
+    // return the id of the note to the caller
     Get.back(result: id);
   }
 
+  /// Clean up the fields before saving
+  /// - remove any one-line comment/snippet with just a <br/>
   Map<String, Object> cleanFields(Map<String, Object> note) {
     if (note["snippet"] == "<br/>") {
       note["snippet"] = "";
@@ -60,6 +85,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
     return note;
   }
 
+  /// Replace newlines with <br/> tags
   String replaceNewlinesWithBreaks(String text) {
     List<String> lines = text.split('\n');
 
@@ -156,19 +182,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Validate returns true if the form is valid, or false otherwise.
-                    if (_formKey.currentState!.validate()) {
-                      final htmlSnippet = replaceNewlinesWithBreaks(_snippetCtl.text);
-                      _onSave({
-                        if (widget._note?.id != null) 'id': widget._note!.id!,
-                        'title': _titleCtl.text,
-                        'comment': _commentCtl.text,
-                        'snippet': htmlSnippet,
-                        'url': _urlCtl.text
-                      });
-                    }
-                  },
+                  onPressed: saveNote,
                   child: const Text('Save'),
                 ),
               ),
@@ -177,5 +191,21 @@ class _EditNoteFormState extends State<EditNoteForm> {
         ),
       ),
     );
+  }
+
+  /// Save the note
+  /// and clean up the fields before saving
+  void saveNote() {
+    // Validate returns true if the form is valid, or false otherwise.
+    if (_formKey.currentState!.validate()) {
+      final htmlSnippet = replaceNewlinesWithBreaks(_snippetCtl.text);
+      _saveNoteToFirebase({
+        if (widget._note?.id != null) 'id': widget._note!.id!,
+        'title': _titleCtl.text,
+        'comment': _commentCtl.text,
+        'snippet': htmlSnippet,
+        'url': _urlCtl.text
+      });
+    }
   }
 }
