@@ -23,6 +23,49 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest single run all tests",
+            "program": "${workspaceRoot}/functions/node_modules/jest/bin/jest.js",
+            "args": [
+              "--verbose",
+              "-i",
+              "--no-cache"
+            ],
+            "cwd": "${workspaceFolder}/functions",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+          },
+          {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest watch all tests",
+            "program": "${workspaceRoot}/functions/node_modules/jest/bin/jest.js",
+            "args": [
+              "--verbose",
+              "-i",
+              "--no-cache",
+              "--watchAll"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+          },
+          {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest watch current file",
+            "program": "${workspaceFolder}/functions/node_modules/jest/bin/jest",
+            "args": [
+              "${fileBasename}",
+              "--verbose",
+              "-i",
+              "--no-cache",
+              "--watchAll"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+          }
     ]
 }
