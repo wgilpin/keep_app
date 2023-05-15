@@ -54,3 +54,4 @@ app.*.map.json
 /web/
 /linux/
 /public/
+/testing.env
