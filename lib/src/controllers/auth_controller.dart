@@ -31,7 +31,7 @@ class AuthCtl extends GetxController {
   _setInitialScreen(User? user) {
     if (user != null) {
       //User Logged IN
-      Get.to(const HomePage());
+      Get.to(HomePage());
     } else {
       //User Logged out
       Get.to(LoginPage());
@@ -41,11 +41,9 @@ class AuthCtl extends GetxController {
   /// Create a new user with email and password
   Future<void> createUser(String email, String password) async {
     try {
-      await auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      await auth.createUserWithEmailAndPassword(email: email, password: password);
     } catch (e) {
-      Get.snackbar("Error creating account", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error creating account", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -54,8 +52,7 @@ class AuthCtl extends GetxController {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
-      Get.snackbar("Unable to log in", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Unable to log in", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -64,8 +61,7 @@ class AuthCtl extends GetxController {
     try {
       await auth.signOut();
     } catch (e) {
-      Get.snackbar("Error signing out", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error signing out", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -74,8 +70,7 @@ class AuthCtl extends GetxController {
     try {
       await _firebaseUser.value?.reload();
     } catch (e) {
-      Get.snackbar("Error refreshing user", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error refreshing user", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -85,8 +80,7 @@ class AuthCtl extends GetxController {
       await _firebaseUser.value?.sendEmailVerification();
       verificationEmailSent.value = true;
     } catch (e) {
-      Get.snackbar("Error refreshing user", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error refreshing user", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 }
