@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Note {
@@ -6,6 +8,7 @@ class Note {
   String? comment;
   String? snippet;
   String? url;
+  DocumentReference? user;
   DateTime? created;
 
   Note();
@@ -26,6 +29,17 @@ class Note {
     snippet = mappedNote['snippet'];
     url = mappedNote['url'];
     created = mappedNote['created']?.toDate();
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      if (title != null) "name": title,
+      if (comment != null) "comment": comment,
+      if (snippet != null) "snippet": snippet,
+      if (url != null) "url": url,
+      if (user != null) "user": user,
+      if (created != null) "created": created,
+    };
   }
 }
 

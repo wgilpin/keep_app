@@ -40,7 +40,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
       await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
     } else {
       final uid = Get.find<AuthCtl>().user!.uid;
-      note["user_id"] = "/users/$uid";
+      note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
       note["created"] = DateTime.now().toUtc();
       var ref = await FirebaseFirestore.instance.collection('notes').add(note);
       id = ref.id;
