@@ -29,10 +29,11 @@ class AuthCtl extends GetxController {
   }
 
   _setInitialScreen(User? user) {
-    if (user != null) {
-      //User Logged IN
-      Get.to(HomePage());
-    } else {
+    // if (user != null) {
+    //   //User Logged IN
+    //   Get.to(HomePage());
+    // } else {
+    if (user == null) {
       //User Logged out
       Get.to(LoginPage());
     }

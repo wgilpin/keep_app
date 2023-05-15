@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/src/views/edit.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +48,11 @@ class MyApp extends StatelessWidget {
       initialBinding: AppBindings(),
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),
-      home: const Root(),
+      // home: const Root(),
+      routes: {
+        '/': (context) => const Root(), // Replace HomePage with your home page widget
+        '/iframe': (context) => const EditNoteForm(null),
+      },
     );
   }
 }

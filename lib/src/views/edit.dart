@@ -92,7 +92,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Note')),
+      appBar: AppBar(
+        title: const Text('Edit Note'),
+        automaticallyImplyLeading: widget._note != null,
+      ),
       body: Form(
         key: _formKey,
         child: Container(
@@ -158,7 +161,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
                     if (_formKey.currentState!.validate()) {
                       final htmlSnippet = replaceNewlinesWithBreaks(_snippetCtl.text);
                       _onSave({
-                        if (widget._note.id != null) 'id': widget._note.id!,
+                        if (widget._note?.id != null) 'id': widget._note!.id!,
                         'title': _titleCtl.text,
                         'comment': _commentCtl.text,
                         'snippet': htmlSnippet,
