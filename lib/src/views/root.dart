@@ -15,7 +15,7 @@ class Root extends GetWidget<AuthCtl> {
         return LoginPage();
       } else {
         return Builder(builder: (context) {
-          return const HomePage();
+          return HomePage();
         });
       }
     });
