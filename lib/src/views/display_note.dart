@@ -19,7 +19,10 @@ class _DisplayNoteState extends State<DisplayNote> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget._note.title ?? "Note"),
+        title: Text(
+          widget._note.title ?? "Note",
+          style: const TextStyle(fontSize: 24),
+        ),
         actions: <Widget>[
           IconButton(
             onPressed: () {
@@ -47,15 +50,20 @@ class _DisplayNoteState extends State<DisplayNote> {
       ),
       body: Wrap(
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: NoteCard(
-                widget._note,
-                null,
-                showTitle: false,
-                showHtml: true,
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 800,
+              ),
+              width: 1000,
+              child: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: NoteCard(
+                  widget._note,
+                  null,
+                  showTitle: false,
+                  showHtml: true,
+                ),
               ),
             ),
           ),

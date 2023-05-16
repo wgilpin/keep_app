@@ -21,36 +21,39 @@ class RegisterPage extends GetWidget<AuthCtl> {
           title: const Text('Register'),
         ),
         body: Center(
-          child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextFormField(
-                    decoration: InputDecoration(hintText: 'Email'),
-                    controller: emailCtl,
-                  ),
-                  addVerticalSpace(40),
-                  TextFormField(
-                    decoration: InputDecoration(hintText: 'Password'),
-                    controller: passwordCtl,
-                    obscureText: true,
-                  ),
-                  addVerticalSpace(40),
-                  TextFormField(
-                    decoration: InputDecoration(hintText: 'Confirm password'),
-                    controller: passwordCtl2,
-                    obscureText: true,
-                  ),
-                  addVerticalSpace(40),
-                  ElevatedButton(
-                    onPressed: validate,
-                    child: Text(
-                      'Sign Up',
+          child: SizedBox(
+            width: 400,
+            child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    TextFormField(
+                      decoration: InputDecoration(hintText: 'Email'),
+                      controller: emailCtl,
                     ),
-                  ),
-                ],
-              )),
+                    addVerticalSpace(40),
+                    TextFormField(
+                      decoration: InputDecoration(hintText: 'Password'),
+                      controller: passwordCtl,
+                      obscureText: true,
+                    ),
+                    addVerticalSpace(40),
+                    TextFormField(
+                      decoration: InputDecoration(hintText: 'Confirm password'),
+                      controller: passwordCtl2,
+                      obscureText: true,
+                    ),
+                    addVerticalSpace(40),
+                    ElevatedButton(
+                      onPressed: validate,
+                      child: Text(
+                        'Sign Up',
+                      ),
+                    ),
+                  ],
+                )),
+          ),
         ));
   }
 

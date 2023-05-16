@@ -34,7 +34,7 @@ class NoteCard extends StatelessWidget {
                 ),
               ),
               Visibility(
-                visible: _note.comment != null,
+                visible: _note.comment != null && _note.comment!.isNotEmpty,
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(

@@ -53,42 +53,51 @@ class LoginPage extends GetWidget<AuthCtl> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Login'),
+          title: const Text('rKyv'),
+          automaticallyImplyLeading: false,
         ),
         body: Center(
-          child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextFormField(
-                    decoration: InputDecoration(hintText: 'Email'),
-                    controller: emailCtl,
-                    onFieldSubmitted: (_) => doLogin(),
-                  ),
-                  addVerticalSpace(40),
-                  TextFormField(
-                    decoration: InputDecoration(hintText: 'Password'),
-                    controller: passwordCtl,
-                    obscureText: true,
-                    onFieldSubmitted: (_) => doLogin(),
-                  ),
-                  addVerticalSpace(40),
-                  ElevatedButton(
-                    onPressed: doLogin,
-                    child: Text(
-                      'Log in',
+          child: SizedBox(
+            width: 400,
+            child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      "Login in to rKyv",
+                      style: const TextStyle(fontSize: 24),
                     ),
-                  ),
-                  addVerticalSpace(40),
-                  TextButton(
-                    onPressed: () {
-                      Get.to(RegisterPage());
-                    },
-                    child: Text('Register'),
-                  ),
-                ],
-              )),
+                    addVerticalSpace(40),
+                    TextFormField(
+                      decoration: InputDecoration(hintText: 'Email'),
+                      controller: emailCtl,
+                      onFieldSubmitted: (_) => doLogin(),
+                    ),
+                    addVerticalSpace(40),
+                    TextFormField(
+                      decoration: InputDecoration(hintText: 'Password'),
+                      controller: passwordCtl,
+                      obscureText: true,
+                      onFieldSubmitted: (_) => doLogin(),
+                    ),
+                    addVerticalSpace(40),
+                    ElevatedButton(
+                      onPressed: doLogin,
+                      child: Text(
+                        'Log in',
+                      ),
+                    ),
+                    addVerticalSpace(40),
+                    TextButton(
+                      onPressed: () {
+                        Get.to(RegisterPage());
+                      },
+                      child: Text('Register'),
+                    ),
+                  ],
+                )),
+          ),
         ));
   }
 }
