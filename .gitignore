@@ -57,3 +57,7 @@ app.*.map.json
 /public/
 /testing.env
 .firebase/
+chromeext/prod/*.zip
+chromeext/build/local/
+chromeext/build/prod/
+node_modules/

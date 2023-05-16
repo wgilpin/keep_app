@@ -1,9 +1,7 @@
-console.log("popup.js loaded");
 import { getActiveTab } from "./utils.js";
 
 // Get URL & selection
 let activeTab = await getActiveTab();
-console.log("url", activeTab.url);
 let url = activeTab.url;
 let title = activeTab.title;
 let selectedText = null;
@@ -40,7 +38,7 @@ function setIframeUrl(url, selectedText, title) {
     title: title,
   };
 
-  let iframe_src = "http://localhost:52233/#/iframe?";
+  let iframe_src = "{{base_url}}/#/iframe?";
   Object.entries(params).forEach(([k, v]) => {
     if (v != null) {
       iframe_src += `${k}=${encodeURIComponent(v)}&`;

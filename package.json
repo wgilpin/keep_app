@@ -1,1 +1,10 @@
-{}
+{
+  "devDependencies": {
+    "mustache": "^4.2.0"
+  },
+  "scripts": {
+    "build-ext:local": "sh ./chromeext/build-local.sh",
+    "build-ext:prod": "sh ./chromeext/build-prod.sh",
+    "build-ext": "npm run build-ext:local & npm run build-ext:prod"
+  }
+}

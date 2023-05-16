@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "All Notes",
+    "name": "rKyv Local",
     "version": "0.1",
-    "description": "A simple Chrome extension to save highlighted text and the URL of the current page.",
+    "description": "Save notes to rKyv",
     "action": {
       "default_popup": "popup.html",
       "default_icon": {
@@ -11,20 +11,16 @@
         "128": "icon128.png"
       },
       "permissions": [
-        "http://localhost:52233/#/iframe",
+        "{{base_url}}/#/iframe",
         "https://fonts.googleapis.com/css2"
       ]
     },
     "permissions": [
-      "activeTab",
-      "scripting"
+      "activeTab"
     ],
     "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'; default-src 'self'; connect-src http://localhost:4000/; frame-src http://localhost:52233/"
+        "extension_pages": "script-src 'self'; object-src 'self'; default-src 'self'; connect-src {{base_url}}; frame-src {{base_url}}"
       },
-    "background": {
-      "service_worker": "background.js"
-    },
     "content_scripts": [
       {
         "matches": ["<all_urls>"],
@@ -37,7 +33,7 @@
       "128": "icon128.png"
     },
     "host_permissions": [
-      "http://localhost:52233/#/iframe"
+      "{{base_url}}/#/iframe"
     ]
   }
   
