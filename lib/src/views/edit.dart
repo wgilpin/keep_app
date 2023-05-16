@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -87,6 +89,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
 
   /// Replace newlines with <br/> tags
   String replaceNewlinesWithBreaks(String text) {
+    if (text.isEmpty) {
+      return text;
+    }
+
     List<String> lines = text.split('\n');
 
     if (lines.last.isEmpty) {
@@ -121,6 +127,13 @@ class _EditNoteFormState extends State<EditNoteForm> {
       appBar: AppBar(
         title: const Text('Edit Note'),
         automaticallyImplyLeading: widget._note != null,
+        actions: <Widget>[
+          IconButton(
+            onPressed: saveNote,
+            icon: const Icon(Icons.save),
+            iconSize: 36,
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -133,9 +146,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: _titleCtl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'A title for the note',
                     labelText: 'Title',
+                    fillColor: Colors.yellow[50],
                   ),
                 ),
               ),
@@ -147,9 +161,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
                     expands: true,
                     minLines: null,
                     maxLines: null,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Comment',
                       labelText: 'Comment',
+                      fillColor: Colors.yellow[50],
                     ),
                   ),
                 ),
@@ -162,9 +177,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
                     expands: true,
                     minLines: null,
                     maxLines: null,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Snippet of text from a web page',
                       labelText: 'Snippet',
+                      fillColor: Colors.yellow[50],
                     ),
                   ),
                 ),
@@ -173,17 +189,11 @@ class _EditNoteFormState extends State<EditNoteForm> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: _urlCtl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'URL of a web page',
                     labelText: 'URL',
+                    fillColor: Colors.yellow[50],
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ElevatedButton(
-                  onPressed: saveNote,
-                  child: const Text('Save'),
                 ),
               ),
             ],
@@ -206,6 +216,11 @@ class _EditNoteFormState extends State<EditNoteForm> {
         'snippet': htmlSnippet,
         'url': _urlCtl.text
       });
+      print("postMessage closePopup");
+      window.postMessage("closePopup", "*");
+
+      IFrameElement element = document.getElementById('iframe') as IFrameElement;
+      element.contentWindow?.postMessage("closePopup", '*');
     }
   }
 }

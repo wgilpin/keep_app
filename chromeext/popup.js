@@ -25,6 +25,12 @@ window.addEventListener('message', function(event) {
   }
 });
 
+document.addEventListener('message', function(event) {
+  if (event.data == "closePopup"){
+    window.close();
+  }
+});
+
 function setIframeUrl(url, selectedText, title) {
   // add comment to the iframe url as a query param
   let keepIFrame = document.getElementById("iframe");
