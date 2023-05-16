@@ -125,7 +125,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Note'),
+        title: const Text(
+          'Edit Note',
+          style: TextStyle(fontSize: 16),
+        ),
         automaticallyImplyLeading: widget._note != null,
         actions: <Widget>[
           IconButton(
