@@ -8,7 +8,8 @@ ThemeData makeTheme() {
     scaffoldBackgroundColor: Colors.yellow[800],
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       foregroundColor: Colors.yellow[200],
-      backgroundColor: Colors.brown[900],
+      backgroundColor: Colors.brown[700],
+      iconSize: 36,
     ),
     // Define the default font family.
     fontFamily: 'Georgia',
