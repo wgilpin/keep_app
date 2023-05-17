@@ -242,6 +242,8 @@ async function vecSimilarRanked(
   for (const n of notes.docs) {
     if (n.id != originalId) {
       promises.push(await getNoteEmbeddings(n));
+    } else {
+      promises.push([]);
     }
   }
   const vecs = await Promise.all(promises);
