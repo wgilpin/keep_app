@@ -86,14 +86,17 @@ async function getTextEmbedding(text, model="text-embedding-ada-002") {
 /**
  * get all notes for current user
  * @param {string} uid the user id
- * @return {Promise<Array<object>>} the notes
+ * @return {Promise<Array<QueryDocumentSnapshot>>} the notes
  */
 async function getMyNotes(uid) {
-  return await getFirestore()
+  logger.debug("getMyNotes", `/users/${uid}`);
+  const userRef = getFirestore().collection("users").doc(uid);
+  logger.debug("getMyNotes", userRef);
+  const res = await getFirestore()
       .collection("notes")
-      .where("user_id", "==", `/users/${uid}`)
-      .get()
-      .then((snapshot) => snapshot.docs.map((doc) => doc.data()));
+      .where("user", "==", userRef)
+      .get();
+  return res;
 }
 
 /**
@@ -120,51 +123,62 @@ async function getSimilarToText(text, uid, count = 10) {
 
 /**
  * get the 3 embeddings for a note title, snippet, comment
- * @param {object} note the note to get embeddings for
+ * @param {QuerySnapshot} noteSnap the note to get embeddings for
+ * @param {string} id the note id
  * @return {Array<Array<number>>} the embeddings
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
-async function getNoteEmbeddings(note) {
-  if (!(note.title || note.snippet || note.comment)) {
-    logger.debug("no text in note", note);
+async function getNoteEmbeddings(noteSnap) {
+  const {title, snippet, comment} = noteSnap.data();
+  let {
+    title_vector: titleV,
+    snippet_vector: snippetV,
+    comment_vector: commentV} = noteSnap.data();
+  if (!(title || snippet || comment)) {
+    logger.debug("no text in noteSnap", noteSnap.id);
     return [];
   }
 
   let dirty = false;
-  logger.debug("getNoteEmbeddings", {note});
-  if (note.title && (!note.title_vector || note.title_vector.length==0)) {
-    note.title_vector = await getTextEmbedding(note.title);
+  logger.debug(`getNoteEmbeddings :${noteSnap.id}`, {noteSnap});
+  if (title && (!titleV || titleV.length==0)) {
+    titleV = await getTextEmbedding(title);
     dirty = true;
-    logger.debug("got title vector for ", note.id, note.title_vector);
+    logger.debug("got title vector for ", noteSnap.id, titleV);
   } else {
-    note.title_vector = note.title_vector||[];
+    titleV = titleV||[];
   }
 
-  if (note.snippet && (!note.snippet_vector||note.snippet_vector.length==0)) {
-    note.snippet_vector = await getTextEmbedding(note.snippet);
+  if (snippet && (!snippetV||snippetV.length==0)) {
+    snippetV = await getTextEmbedding(snippet);
     dirty = true;
-    logger.debug("got snippet vector for ", note.id, note.snippet_vector);
+    logger.debug("got snippet vector for ", noteSnap.id, snippetV);
   } else {
-    note.snippet_vector = note.snippet_vector||[];
+    snippetV = snippetV||[];
   }
 
-  if (note.comment && (!note.comment_vector || note.comment_vector.length==0)) {
-    note.comment_vector = await getTextEmbedding(note.comment);
+  if (comment && (!commentV || commentV.length==0)) {
+    commentV = await getTextEmbedding(comment);
     dirty = true;
-    logger.debug("got comment vector for ", note.id, note.comment_vector);
+    logger.debug("got comment vector for ", noteSnap.id, commentV);
   } else {
     logger.debug("Didn't get comment vector for ",
-        note.id,
-        !note.comment_vector);
-    note.comment_vector = note.comment_vector||[];
+        noteSnap.id,
+        !commentV);
+    commentV = commentV||[];
   }
 
   if (dirty) {
-    logger.debug("updating note", note);
-    getFirestore().collection("notes").doc(note.id).set(note);
+    logger.debug("updating note", noteSnap.id);
+    getFirestore().collection("notes").doc(noteSnap.id).set({
+      title, snippet, comment,
+      title_vector: titleV,
+      snippet_vector: snippetV,
+      comment_vector: commentV,
+    });
   }
-  const res = [note.title_vector, note.snippet_vector, note.comment_vector];
-  logger.debug("got note embeddings", note.id, res);
+  const res = [titleV, snippetV, commentV];
+  logger.debug("got note embeddings", noteSnap.id, res);
   return res;
 }
 
@@ -190,6 +204,11 @@ function cosDistance(v1, v2) {
  */
 function getNoteSimilarity(noteVecs, searchVecs) {
   let maxSimilarity = 0.0;
+  // if seasrchVecs has only one vector, repeat it for each noteVec
+  // this happens wehn the searchVec is from a text search
+  if (searchVecs.length == 1) {
+    searchVecs = Array(noteVecs.length).fill(searchVecs[0]);
+  }
   // if there are embeddings and the search vector has embeddings
   for (let idx=0; idx <= noteVecs.length; idx++) {
     // check the jth element of note- and search-Vecs both have embeddings
@@ -203,17 +222,17 @@ function getNoteSimilarity(noteVecs, searchVecs) {
 /**
   * get the 10 most similar notes to a search vector
   * @param {Array<Array<number>>} searchVecs array of the vectors to search for
-  *                                         (eg title, snippet, comment)
-  * @param {Array<object>} notes the notes to search through
+*                                (eg title, snippet, comment), or maybe just one
+  * @param {Array<QueryDocumentSnapshot>} notes the notes to search through
   * @param {number} count the number of notes to return
   * @param {number} threshold the minimum similarity score to return
-  * @return {Array<object>} the most similar notes sorted by similarity
+  * @return {Array<String>} the ids of most similar notes sorted by similarity
   */
 async function vecSimilarRanked(
     searchVecs, notes, count = 10, threshold = 0.7) {
   logger.debug("vectorSimilaritiesRanked #", notes.length);
   const promises = [];
-  for (const n of notes) {
+  for (const n of notes.docs) {
     promises.push(await getNoteEmbeddings(n));
   }
   const vecs = await Promise.all(promises);
@@ -225,10 +244,10 @@ async function vecSimilarRanked(
     // for a note with embs 'noteVec', calculate the similarity
     const similarity = getNoteSimilarity(vecs[i], searchVecs);
     if (similarity > threshold) {
-      logger.debug(`note ${notes[i].id} over threshold: ${similarity}`);
-      similarityScores[notes[i].id] = similarity;
+      logger.debug(`note ${notes.docs[i].id} over threshold: ${similarity}`);
+      similarityScores[notes.docs[i].id] = similarity;
     } else {
-      logger.debug(`note ${notes[i].id} under threshold: ${similarity}`);
+      logger.debug(`note ${notes.docs[i].id} under threshold: ${similarity}`);
     }
   }
   logger.debug("vectorSimilaritiesRanked similarityScores", {similarityScores});
@@ -239,43 +258,19 @@ async function vecSimilarRanked(
   // Retrieve the top 'count' notes
   const rankedNotes = sortedScores
       .slice(0, count)
-      .map(([id]) => notes.find((n) => n.id == id));
+      .map((score) => score[0]);
 
-  return rankedNotes;
+  return Array(rankedNotes);
 }
 
 /**
-  * get the 10 most similar notes to a given note
-  * @param {Object} params - The parameters object.
-  * @param {string} params.noteId - The ID of the note to compare to.
-  * @param {number} params.count - The maximum number of results.
-  * @param {Object} context - The context object.
-  * @param {Object} context.auth - The authentication information.
-  * @return {Array<object>} the most similar notes sorted by similarity
-  */
-exports.getSimilarToNote = async function({noteId, count}, {auth}) {
-  const uid = auth.uid;
-  const note = await getFirestore().collection("notes").doc(noteId).get();
-  if (note.title) {
-    const notes = await getMyNotes(uid);
-    const vector = await getNoteEmbeddings(note);
-    return await vecSimilarRanked(vector, notes, count);
-  } else {
-    return [];
-  }
-};
-
-/**
  * search for text in the notes
- * @param {Object} req - The parameters object.
- * @param {string} req.searchText - The search text.
- * @param {number} req.maxResults - The maximum number of results.
- * @return {Array<object>} the most similar notes sorted by similarity
+ * @param {string} searchText the text to search for
+ * @param {number} maxResults the maximum number of results to return
+ * @param {string} uid the user id
+ * @return {Array<QuerySnapshot>} the most similar notes sorted by similarity
  */
-exports.textSearch = onCall(async (req) => {
-  const {searchText, maxResults} = req.data;
-  const uid = req.auth.uid;
-  logger.debug("textSearch user", uid);
+exports.doTextSearch = async function(searchText, maxResults, uid) {
   const notes = await getMyNotes(uid);
   const results = [];
   const resultSet = {};
@@ -285,14 +280,15 @@ exports.textSearch = onCall(async (req) => {
     return [];
   }
 
-  for (const n of notes) {
+  for (const snap of notes.docs) {
+    const note = snap.data();
     if (
-      n.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      n.comment.toLowerCase().includes(searchText.toLowerCase()) ||
-      n.snippet.toLowerCase().includes(searchText.toLowerCase())
+      note.title.toLowerCase().includes(searchText.toLowerCase()) ||
+      note.comment.toLowerCase().includes(searchText.toLowerCase()) ||
+      note.snippet.toLowerCase().includes(searchText.toLowerCase())
     ) {
-      results.push(n);
-      resultSet[n.id] = true;
+      results.push(note);
+      resultSet[snap.id] = true;
     }
   }
 
@@ -309,4 +305,69 @@ exports.textSearch = onCall(async (req) => {
     }
   }
   return results;
+};
+
+/**
+ * FUNCTION: search for text in the notes
+ * @param {Object} req - The parameters object.
+ * @param {string} req.searchText - The search text.
+ * @param {number} req.maxResults - The maximum number of results.
+ * @return {Array<QuerySnapshot>} the most similar notes sorted by similarity
+ */
+exports.textSearch = onCall(async (req) => {
+  const {searchText, maxResults} = req.data;
+  const uid = req.auth.uid;
+  logger.debug("textSearch user", uid);
+  exports.doTextSearch(searchText, maxResults, uid);
+});
+
+/**
+ * search for text in the notes
+ * @param {string} noteId - ID of the note to compare
+ * @param {number} maxResults - The maximum number of results.
+ * @param {string} uid - The user id.
+ * @return {Array<object>} the most similar notes sorted by similarity
+ */
+exports.doNoteSearch = async function(noteId, maxResults, uid) {
+  // do vector search
+  const note = await getFirestore().collection("notes").doc(noteId).get();
+  const {title, comment, snippet} = note.data();
+  logger.debug("noteSearch 2 note",
+      {note, fields: (title || comment || snippet)});
+  if (title || comment || snippet) {
+    logger.debug("noteSearch 3 content found");
+    const notes = await getMyNotes(uid);
+
+    // if the user has no notes, return empty
+    if (notes.length == 0) {
+      logger.debug("noteSearch 4 - no notes");
+      return [];
+    }
+
+    logger.debug("noteSearch 5", noteId);
+
+    const vector = await getNoteEmbeddings(note);
+    const searchResults = await vecSimilarRanked(vector, notes, maxResults);
+    logger.debug("noteSearch 6 results", searchResults);
+    return searchResults;
+  } else {
+    logger.debug("noteSearch 7 - no text");
+    return [];
+  }
+};
+
+
+/**
+ * search for text in the notes
+ * @param {Object} req - The parameters object.
+ * @param {string} req.noteId - ID of the note to compare
+ * @param {number} req.maxResults - The maximum number of results.
+ * @return {Array<object>} the most similar notes sorted by similarity
+ */
+exports.noteSearch = onCall(async (req) => {
+  const {noteId, maxResults} = req.data;
+  logger.debug("noteSearch IN ", {noteId, maxResults});
+  const uid = req.auth.uid;
+
+  exports.doNoteSearch(noteId, maxResults, uid);
 });

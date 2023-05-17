@@ -67,6 +67,14 @@
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
+          },
+          {
+            "type": "node",
+            "request": "launch",
+            "name": "Run runner.js",
+            "program": "./functions/test/runner.js",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
           }
     ]
 }
