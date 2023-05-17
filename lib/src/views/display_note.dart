@@ -122,11 +122,21 @@ class _DisplayNoteState extends State<DisplayNote> {
   Future<List<Note>> getRelatedNotes() async {
     // return [note, note, note, note, note, note];
     final List<String> ids = await Recommender.noteSearch(widget._note, 9, context);
+    debugPrint("related notes : $ids");
     final promises = ids.map((id) => getNote(id));
     return Future.wait(promises);
   }
 
+  onCardTapped(note) {
+    print("displayNote.onCardTapped");
+    setState(() {
+      widget._note = note;
+      relatedNotes = getRelatedNotes();
+    });
+  }
+
   getRelatedColumn(List<Note> related) {
+    debugPrint("related notes : ${related.map((n) => n.title).toList()}}}");
     return related.isNotEmpty
         ? related
             .map(
@@ -137,6 +147,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                   child: NoteCard(
                     n,
                     null,
+                    onTapped: () => onCardTapped(n),
                     isSmall: true,
                   ),
                 ),
