@@ -1,3 +1,5 @@
 {
-    "base_url": "localhost:52233"
+    "base_url": "http://localhost:52233",
+    "name": "rKyv Local",
+    "is_debug": true
 }

@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "rKyv Local",
+    "name": "{{{name}}}",
     "version": "0.1",
     "description": "Save notes to rKyv",
     "action": {
@@ -11,7 +11,7 @@
         "128": "icon128.png"
       },
       "permissions": [
-        "{{base_url}}/#/iframe",
+        "{{{base_url}}}/#/iframe",
         "https://fonts.googleapis.com/css2"
       ]
     },
@@ -19,7 +19,7 @@
       "activeTab"
     ],
     "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'; default-src 'self'; connect-src {{base_url}}; frame-src {{base_url}}"
+        "extension_pages": "script-src 'self'; object-src 'self'; default-src 'self'; connect-src {{{base_url}}}; frame-src {{{base_url}}}"
       },
     "content_scripts": [
       {
@@ -33,7 +33,7 @@
       "128": "icon128.png"
     },
     "host_permissions": [
-      "{{base_url}}/#/iframe"
+      "{{{base_url}}}/#/iframe"
     ]
   }
   

@@ -1,3 +1,5 @@
 {
-    "base_url": "https://notes-a522f.firebaseapp.com"
+    "base_url": "https://notes-a522f.firebaseapp.com",
+    "name": "rKyv Notes & Bookmarks",
+    "is_debug": false
 }

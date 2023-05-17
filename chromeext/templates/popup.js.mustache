@@ -38,7 +38,7 @@ function setIframeUrl(url, selectedText, title) {
     title: title,
   };
 
-  let iframe_src = "{{base_url}}/#/iframe?";
+  let iframe_src = "{{{base_url}}}/#/iframe?";
   Object.entries(params).forEach(([k, v]) => {
     if (v != null) {
       iframe_src += `${k}=${encodeURIComponent(v)}&`;

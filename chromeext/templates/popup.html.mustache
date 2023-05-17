@@ -1,4 +1,6 @@
 <link href="popup.css" rel="stylesheet" type="text/css" />
 <script type="module" src="popup.js" defer></script>
-
-<iframe id="iframe" class="w-full" src="{{base_url}}/#/iframe?" />
+{{#is_debug}}
+<p>Debug mode</p>
+{{/is_debug}}
+<iframe id="iframe" class="w-full" src="{{{base_url}}}/#/iframe?" />

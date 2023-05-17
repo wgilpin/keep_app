@@ -21,7 +21,7 @@ for file in "$SOURCE_DIR"/*; do
             # Apply Mustache templating
             output_filename="${filename%.mustache}"
             
-            mustache prod.json "$file" > ./"$OUT_DIR/$output_filename"
+            mustache local.json "$file" > ./"$OUT_DIR/$output_filename"
             echo "built  $OUT_DIR/$output_filename"
         else
             # Copy the file as is
