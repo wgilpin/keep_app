@@ -17,7 +17,9 @@ class Note {
     comment = snapshot.data()['comment'];
     snippet = snapshot.data()['snippet'];
     url = snapshot.data()['url'];
-    created = snapshot.data()['created'].toDate();
+    if (snapshot.data()['created'] != null) {
+      created = snapshot.data()['created'].toDate();
+    }
   }
 
   Note.fromMap(mappedNote) {

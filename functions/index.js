@@ -91,7 +91,6 @@ async function getTextEmbedding(text, model="text-embedding-ada-002") {
 async function getMyNotes(uid) {
   logger.debug("getMyNotes", `/users/${uid}`);
   const userRef = getFirestore().collection("users").doc(uid);
-  logger.debug("getMyNotes", userRef);
   const res = await getFirestore()
       .collection("notes")
       .where("user", "==", userRef)
@@ -140,11 +139,11 @@ async function getNoteEmbeddings(noteSnap) {
   }
 
   let dirty = false;
-  logger.debug(`getNoteEmbeddings :${noteSnap.id}`, {noteSnap});
+  logger.debug(`getNoteEmbeddings :${noteSnap.id}`);
   if (title && (!titleV || titleV.length==0)) {
     titleV = await getTextEmbedding(title);
     dirty = true;
-    logger.debug("got title vector for ", noteSnap.id, titleV);
+    logger.debug("got title vector for ", noteSnap.id, titleV.length);
   } else {
     titleV = titleV||[];
   }
@@ -152,7 +151,7 @@ async function getNoteEmbeddings(noteSnap) {
   if (snippet && (!snippetV||snippetV.length==0)) {
     snippetV = await getTextEmbedding(snippet);
     dirty = true;
-    logger.debug("got snippet vector for ", noteSnap.id, snippetV);
+    logger.debug("got snippet vector for ", noteSnap.id, snippetV.length);
   } else {
     snippetV = snippetV||[];
   }
@@ -160,11 +159,10 @@ async function getNoteEmbeddings(noteSnap) {
   if (comment && (!commentV || commentV.length==0)) {
     commentV = await getTextEmbedding(comment);
     dirty = true;
-    logger.debug("got comment vector for ", noteSnap.id, commentV);
+    logger.debug("got comment vector for ", noteSnap.id, commentV.length);
   } else {
     logger.debug("Didn't get comment vector for ",
-        noteSnap.id,
-        !commentV);
+        noteSnap.id);
     commentV = commentV||[];
   }
 
@@ -175,10 +173,10 @@ async function getNoteEmbeddings(noteSnap) {
       title_vector: titleV,
       snippet_vector: snippetV,
       comment_vector: commentV,
-    });
+    }, {merge: true});
   }
   const res = [titleV, snippetV, commentV];
-  logger.debug("got note embeddings", noteSnap.id, res);
+  logger.debug("got note embeddings", noteSnap.id);
   return res;
 }
 
@@ -212,7 +210,10 @@ function getNoteSimilarity(noteVecs, searchVecs) {
   // if there are embeddings and the search vector has embeddings
   for (let idx=0; idx <= noteVecs.length; idx++) {
     // check the jth element of note- and search-Vecs both have embeddings
-    if (noteVecs[idx] && searchVecs[idx]) {
+    if (noteVecs[idx] &&
+        noteVecs[idx].length &&
+        searchVecs &&
+        searchVecs[idx].length) {
       const similarity = (cosDistance(noteVecs[idx], searchVecs[idx]));
       maxSimilarity = Math.max(maxSimilarity, similarity);
     }
@@ -318,7 +319,7 @@ exports.textSearch = onCall(async (req) => {
   const {searchText, maxResults} = req.data;
   const uid = req.auth.uid;
   logger.debug("textSearch user", uid);
-  exports.doTextSearch(searchText, maxResults, uid);
+  return exports.doTextSearch(searchText, maxResults, uid);
 });
 
 /**
@@ -332,26 +333,30 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
   // do vector search
   const note = await getFirestore().collection("notes").doc(noteId).get();
   const {title, comment, snippet} = note.data();
-  logger.debug("noteSearch 2 note",
-      {note, fields: (title || comment || snippet)});
+  logger.debug("doNoteSearch 2 note",
+      {id: note.id, fields: (title || comment || snippet)});
   if (title || comment || snippet) {
-    logger.debug("noteSearch 3 content found");
+    logger.debug("doNoteSearch 3 content found");
     const notes = await getMyNotes(uid);
 
     // if the user has no notes, return empty
     if (notes.length == 0) {
-      logger.debug("noteSearch 4 - no notes");
+      logger.debug("doNoteSearch 4 - no notes");
       return [];
     }
 
-    logger.debug("noteSearch 5", noteId);
+    logger.debug("doNoteSearch 5", noteId);
 
     const vector = await getNoteEmbeddings(note);
-    const searchResults = await vecSimilarRanked(vector, notes, maxResults);
-    logger.debug("noteSearch 6 results", searchResults);
+    logger.debug("doNoteSearch 6", noteId);
+    const searchResults = await vecSimilarRanked(
+        vector,
+        notes,
+        maxResults);
+    logger.debug("doNoteSearch 7 results", searchResults);
     return searchResults;
   } else {
-    logger.debug("noteSearch 7 - no text");
+    logger.debug("doNoteSearch 8 - no text");
     return [];
   }
 };
@@ -369,5 +374,5 @@ exports.noteSearch = onCall(async (req) => {
   logger.debug("noteSearch IN ", {noteId, maxResults});
   const uid = req.auth.uid;
 
-  exports.doNoteSearch(noteId, maxResults, uid);
+  return exports.doNoteSearch(noteId, maxResults, uid);
 });

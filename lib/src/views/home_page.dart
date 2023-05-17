@@ -57,8 +57,9 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Obx(() =>
-            nc.isLoading.value ? const CircularProgressIndicator() : SafeArea(child: CardGrid(nc.notes, changed))),
+        child: Obx(() => nc.isLoading.value
+            ? const Center(child: CircularProgressIndicator())
+            : SafeArea(child: CardGrid(nc.notes, changed))),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
