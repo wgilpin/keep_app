@@ -1,7 +1,7 @@
 const index = require("../index.js");
 
 index.doTextSearch(
-    "hello",
+    "Note Four",
     10,
     "zdt3YB86kJaxsESbMmkblkqQ3093")
     .then((res) => {
@@ -9,10 +9,9 @@ index.doTextSearch(
     });
 
 index.doNoteSearch(
-    "EoHdKsphl72uXwMv5akT",
+    "FgtHXS1200uAsLUyTjHx",
     10,
     "zdt3YB86kJaxsESbMmkblkqQ3093")
     .then((res) => {
       console.log(res);
     });
-

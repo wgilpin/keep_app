@@ -71,7 +71,7 @@
           {
             "type": "node",
             "request": "launch",
-            "name": "Run runner.js",
+            "name": "Cloud Functions",
             "program": "./functions/test/runner.js",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

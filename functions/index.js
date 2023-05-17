@@ -13,8 +13,8 @@ const functions = require("firebase-functions");
 const {getFirestore} = require("firebase-admin/firestore");
 const {initializeApp} = require("firebase-admin/app");
 const {Configuration, OpenAIApi} = require("openai");
-const {dot, norm} = require("mathjs");
-// const {getAuth} = require("firebase-admin/auth");
+const similarity = require( "compute-cosine-similarity" );
+const {stripHtml} = require("string-strip-html");
 
 initializeApp();
 // const auth = getAuth(app);
@@ -71,9 +71,7 @@ async function getTextEmbedding(text, model="text-embedding-ada-002") {
     input: text,
     model,
   };
-  logger.debug("openai config", {embConfig});
   const emb = await openai.createEmbedding(embConfig);
-  logger.debug(`getTextEmbedding for ${text}`, {emb});
   try {
     logger.debug("getTextEmbedding got embeddings");
     return emb.data.data[0]["embedding"];
@@ -108,17 +106,36 @@ async function getMyNotes(uid) {
 async function getSimilarToText(text, uid, count = 10) {
   const myNotes = await getMyNotes(uid);
   const textVector = await getTextEmbedding(text);
-  const similarNoteIds = await vecSimilarRanked([textVector], myNotes, count);
+  const similarNoteIds = await vecSimilarRanked(
+      [textVector],
+      myNotes,
+      null,
+      count);
   logger.debug("getSimilarToText res", {similarNoteIds});
   return similarNoteIds;
 }
-
 /**
- * are two urls on same domain
- * @param {string} url1 the first url
- * @param {string} url2 the second url
- * @return {boolean} true if the urls are on the same domain
+ * clean the HTM out of the snippet
+ * @param {string} text the text to clean
+ * @return {string} the cleaned text
+ * @see https://www.npmjs.com/package/string-strip-html
  */
+function cleanSnippet(text) {
+  // replace </p> with </p>. in the text
+  // so sentences are delimed by periods
+  text = text.replace(/<\/p>/g, "</p>.");
+
+  // strip the html
+  text = stripHtml(text, {
+    ignoreTagsWithTheirContents: ["code"],
+    stripTogetherWithTheirContents: ["button"],
+    skipHtmlDecoding: true,
+  }).result;
+
+  // replace any multiple periods with single periods
+  text = text.replace(/\.{2,}/g, ". ");
+  return text;
+}
 
 /**
  * get the 3 embeddings for a note title, snippet, comment
@@ -149,7 +166,8 @@ async function getNoteEmbeddings(noteSnap) {
   }
 
   if (snippet && (!snippetV||snippetV.length==0)) {
-    snippetV = await getTextEmbedding(snippet);
+    const clean = cleanSnippet(snippet);
+    snippetV = await getTextEmbedding(clean);
     dirty = true;
     logger.debug("got snippet vector for ", noteSnap.id, snippetV.length);
   } else {
@@ -180,19 +198,6 @@ async function getNoteEmbeddings(noteSnap) {
   return res;
 }
 
-/**
- * get the cosine distance between two vectors
- * @param {Array<number>} v1 the first vector
- * @param {Array<number>} v2 the second vector
- * @return {number} the cosine distance between v1 and v2
- */
-function cosDistance(v1, v2) {
-  try {
-    return dot(v1, v2) / (norm(v1) * norm(v2));
-  } catch (_) {
-    return 0.0;
-  }
-}
 
 /**
  * for a note with embs 'noteVecs', calculate the similarity with searchVecs
@@ -214,8 +219,8 @@ function getNoteSimilarity(noteVecs, searchVecs) {
         noteVecs[idx].length &&
         searchVecs &&
         searchVecs[idx].length) {
-      const similarity = (cosDistance(noteVecs[idx], searchVecs[idx]));
-      maxSimilarity = Math.max(maxSimilarity, similarity);
+      const cosDistance = similarity(noteVecs[idx], searchVecs[idx]);
+      maxSimilarity = Math.max(maxSimilarity, cosDistance);
     }
   }
   return maxSimilarity;
@@ -225,16 +230,19 @@ function getNoteSimilarity(noteVecs, searchVecs) {
   * @param {Array<Array<number>>} searchVecs array of the vectors to search for
 *                                (eg title, snippet, comment), or maybe just one
   * @param {Array<QueryDocumentSnapshot>} notes the notes to search through
+  * @param {string} originalId the id of the note we are searching for, or null
   * @param {number} count the number of notes to return
   * @param {number} threshold the minimum similarity score to return
   * @return {Array<String>} the ids of most similar notes sorted by similarity
   */
 async function vecSimilarRanked(
-    searchVecs, notes, count = 10, threshold = 0.7) {
+    searchVecs, notes, originalId, count = 10, threshold = 0.7) {
   logger.debug("vectorSimilaritiesRanked #", notes.length);
   const promises = [];
   for (const n of notes.docs) {
-    promises.push(await getNoteEmbeddings(n));
+    if (n.id != originalId) {
+      promises.push(await getNoteEmbeddings(n));
+    }
   }
   const vecs = await Promise.all(promises);
   // vecs is now 3 embeddings for each note
@@ -243,16 +251,16 @@ async function vecSimilarRanked(
   const similarityScores = {};
   for (let i=0; i < vecs.length; i++) {
     // for a note with embs 'noteVec', calculate the similarity
-    const similarity = getNoteSimilarity(vecs[i], searchVecs);
-    if (similarity > threshold) {
-      logger.debug(`note ${notes.docs[i].id} over threshold: ${similarity}`);
-      similarityScores[notes.docs[i].id] = similarity;
+    const score = getNoteSimilarity(vecs[i], searchVecs);
+    if (score > threshold) {
+      logger.debug(`note ${notes.docs[i].id} over threshold: ${score}`);
+      similarityScores[notes.docs[i].id] = score;
     } else {
-      logger.debug(`note ${notes.docs[i].id} under threshold: ${similarity}`);
+      logger.debug(`note ${notes.docs[i].id} under threshold: ${score}`);
     }
   }
   logger.debug("vectorSimilaritiesRanked similarityScores", {similarityScores});
-  // Sort similarity scores in descending order
+  // Sort score scores in descending order
   const sortedScores = Object.entries(
       similarityScores).sort((a, b) => b[1] - a[1]);
 
@@ -352,6 +360,7 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
     const searchResults = await vecSimilarRanked(
         vector,
         notes,
+        noteId,
         maxResults);
     logger.debug("doNoteSearch 7 results", searchResults);
     return searchResults;
