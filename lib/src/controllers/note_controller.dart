@@ -31,4 +31,14 @@ class NoteController extends GetxController {
       Get.snackbar("Error Loading", e.toString());
     }
   }
+
+  setData(List<String> noteIds) async {
+    notes.clear();
+    for (var id in noteIds) {
+      final note = await getNote(id);
+      notes.add(note);
+    }
+    isLoading.value = false;
+    notes.refresh();
+  }
 }

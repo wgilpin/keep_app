@@ -4,6 +4,7 @@ import 'package:keep_app/src/controllers/note_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/card_grid.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/recommend.dart';
 
 import 'profile.dart';
 
@@ -44,7 +45,7 @@ class HomePage extends StatelessWidget {
                 prefixIcon: IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
-                    // Perform the search here
+                    doSearch(context);
                   },
                 ),
                 border: OutlineInputBorder(
@@ -90,5 +91,14 @@ class HomePage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> doSearch(BuildContext context) async {
+    if (_searchController.text.isEmpty) {
+      nc.getData();
+    } else {
+      final results = await Recommender.textSearch(_searchController.text, 10, context);
+      nc.setData(results);
+    }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
 
 /// Class to call the recommender cloud functions
