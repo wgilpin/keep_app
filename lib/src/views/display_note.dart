@@ -94,14 +94,21 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   Widget columnView(AsyncSnapshot<Object> snapshot) {
-    if (snapshot.data == null) return const Center(child: CircularProgressIndicator());
-    final related = snapshot.data as List<Note>;
     return Column(
       children: [
         mainCard(),
         Expanded(
           child: Wrap(
-            children: getRelatedColumn(related),
+            children: snapshot.data == null
+                ? [
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  ]
+                : getRelatedColumn(snapshot.data as List<Note>),
           ),
         ),
       ],
@@ -109,12 +116,18 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   Widget fullWidth(AsyncSnapshot<Object> snapshot) {
-    final List<Note> related = snapshot.data != null ? snapshot.data as List<Note> : [];
     return Flex(direction: Axis.horizontal, children: [
       Expanded(child: Align(alignment: Alignment.topCenter, child: mainCard())),
       Column(
-        children:
-            snapshot.data == null ? [const Center(child: CircularProgressIndicator())] : getRelatedColumn(related),
+        children: snapshot.data == null
+            ? [
+                const Center(
+                    child: Padding(
+                  padding: EdgeInsets.only(top: 20.0),
+                  child: CircularProgressIndicator(),
+                ))
+              ]
+            : getRelatedColumn(snapshot.data as List<Note>),
       ),
     ]);
   }
