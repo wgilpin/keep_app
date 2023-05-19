@@ -136,7 +136,11 @@ class _DisplayNoteState extends State<DisplayNote> {
     // return [note, note, note, note, note, note];
     final List<String> ids = await Recommender.noteSearch(widget._note, 9, context);
     debugPrint("related notes : $ids");
-    final promises = ids.map((id) => getNote(id));
+    final promises = [
+      for (var i in ids)
+        if (i != widget._note.id) getNote(i)
+    ];
+    // final promises = ids.map((id) => getNote(id));
     return Future.wait(promises);
   }
 
