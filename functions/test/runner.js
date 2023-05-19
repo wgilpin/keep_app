@@ -1,3 +1,6 @@
+/* eslint-disable max-len */
+/* eslint-disable camelcase */
+/* eslint-disable require-jsdoc */
 const index = require("../index.js");
 
 index.doTextSearch(
@@ -15,3 +18,5 @@ index.doNoteSearch(
     .then((res) => {
       console.log(res);
     });
+
+
