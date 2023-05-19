@@ -141,11 +141,10 @@ async function getNoteEmbeddings(noteId) {
       .collection("embeddings")
       .doc(noteId)
       .get();
-  const {
-    titleVector: titleVector,
-    snippetVector: snippetV,
-    commentVector: commentV} = embSnap.data();
-  return [titleVector, snippetV, commentV];
+  const titleVector = embSnap.data().titleVector;
+  const snippetVector = embSnap.data().snippetVector;
+  const commentVector = embSnap.data().commentVector;
+  return [titleVector, snippetVector, commentVector];
 }
 
 /**
@@ -157,7 +156,7 @@ async function getNoteEmbeddings(noteId) {
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
 
-exports.updateNoteEmbeddings= async (title, comment, snippet, noteSnap) => {
+exports.updateNoteEmbeddings= async (title, comment, snippet, noteId) => {
   if (!(title || snippet || comment)) {
     return [];
   }
@@ -170,17 +169,17 @@ exports.updateNoteEmbeddings= async (title, comment, snippet, noteSnap) => {
 
   if (snippet) {
     const clean = cleanSnippet(snippet);
-    updates["snippet"] = await getTextEmbedding(clean);
+    updates["snippetVector"] = await getTextEmbedding(clean);
   }
 
   if (comment) {
-    updates["comment"] = await getTextEmbedding(comment);
+    updates["commentVector"] = await getTextEmbedding(comment);
   }
 
   // write any updates to the db
-  getFirestore()
+  return getFirestore()
       .collection("embeddings")
-      .doc(noteSnap.id)
+      .doc(noteId)
       .set(updates, {merge: true});
 };
 
@@ -362,9 +361,47 @@ exports.noteSearch = onCall(async (req) => {
   return exports.doNoteSearch(noteId, maxResults, uid);
 });
 
+/**
+ * Firestore on-create trigger
+ * Set the embeddings for a new note
+ */
+exports.createNote = functions.firestore
+    .document("notes/{noteId}")
+    .onCreate((snap, context) => {
+      logger.debug("createNote", context.params.noteId);
+
+      // Get an object representing the document
+      const newValue = snap.data();
+
+      return exports.updateNoteEmbeddings(
+          newValue.title,
+          newValue.comment,
+          newValue.snippet,
+          context.params.noteId);
+    });
+
+/**
+ * Firestore on-delete trigger
+ * Remove the embeddings for a deleted note
+ */
+exports.deleteNote = functions.firestore
+    .document("notes/{noteId}")
+    .onDelete((_, context) => {
+      logger.debug("deleteNote", context.params.noteId);
+      return getFirestore()
+          .collection("embeddings")
+          .doc(context.params.noteId)
+          .delete();
+    });
+
+/**
+ * Firestore on-update trigger
+ * Update the embeddings for a note
+ */
 exports.updateNote = functions.firestore
     .document("notes/{noteId}")
     .onUpdate((change, context) => {
+      logger.debug("updateNote", context.params.noteId);
       // Get an object representing the document
       const newValue = change.after.data();
 
@@ -379,7 +416,7 @@ exports.updateNote = functions.firestore
       const snippetChange =
         newValue.snippet != previousValue.snippet? newValue.snippet : null;
 
-      exports.updateNoteEmbeddings(
+      return exports.updateNoteEmbeddings(
           titleChange,
           commentChange,
           snippetChange,
