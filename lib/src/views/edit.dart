@@ -1,4 +1,8 @@
-import 'dart:html';
+// ignore: unused_import
+
+import 'platform_plugin_stub.dart'
+    if (dart.library.io) 'platform_plugin_io.dart'
+    if (dart.library.html) 'platform_plugin_web.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -219,11 +223,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
         'snippet': htmlSnippet,
         'url': _urlCtl.text
       });
-      print("postMessage closePopup");
-      window.postMessage("closePopup", "*");
-
-      IFrameElement element = document.getElementById('iframe') as IFrameElement;
-      element.contentWindow?.postMessage("closePopup", '*');
+      platformPluginMethod();
     }
   }
 }
