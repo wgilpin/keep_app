@@ -366,21 +366,31 @@ exports.noteSearch = onCall(async (req) => {
 exports.createNote = functions.firestore
     .document("notes/{noteId}")
     .onCreate((snap, context) => {
-      // Get an object representing the document
-      const newValue = snap.data();
-      snap.after.ref.set(
-          {
-            updatedAt: Timestamp.fromDate(new Date()),
-          }, {merge: true})
-          .catch((e) => {
-            logger.error("note onCreated - error updating note", e);
-            return false;
-          });
-      return exports.updateNoteEmbeddings(
-          newValue.title,
-          newValue.comment,
-          newValue.snippet,
-          context.params.noteId);
+      // Get an object representing the documenttry {
+      try {
+        const newValue = snap.data();
+        logger.debug("createNote 1", snap);
+        getFirestore()
+            .collection("notes")
+            .doc(context.params.noteId)
+            .set(
+                {
+                  updatedAt: Timestamp.fromDate(new Date()),
+                }, {merge: true})
+            .catch((e) => {
+              logger.error("note onCreated - error updating note", e);
+              return false;
+            });
+        logger.debug("createNote 2", context.params.noteId);
+        return exports.updateNoteEmbeddings(
+            newValue.title,
+            newValue.comment,
+            newValue.snippet,
+            context.params.noteId);
+      } catch (error) {
+        logger.error("note onCreated - error", error);
+        return [];
+      }
     });
 
 /**
@@ -418,14 +428,19 @@ exports.updateNote = functions.firestore
       const snippetChange =
         newValue.snippet != previousValue.snippet? newValue.snippet : null;
 
-      change.after.ref.set(
-          {
-            updatedAt: Timestamp.fromDate(new Date()),
-          }, {merge: true})
-          .catch((e) => {
-            logger.error("note onUpdate - error updating note", e);
-            return false;
-          });
+      // don't update if ~now already to avoid recursion
+      const now = Timestamp.fromDate(new Date());
+      // 500ms since last update? ignore
+      if (now - change.before.data().updatedAt > 500) {
+        change.after.ref.set(
+            {
+              updatedAt: Timestamp.fromDate(new Date()),
+            }, {merge: true})
+            .catch((e) => {
+              logger.error("note onUpdate - error updating note", e);
+              return false;
+            });
+      }
 
       return exports.updateNoteEmbeddings(
           titleChange,

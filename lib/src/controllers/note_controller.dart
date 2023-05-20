@@ -16,13 +16,11 @@ class NoteController {
         QuerySnapshot snap = await db
             .collection('notes')
             .where("user", isEqualTo: db.doc("/users/$uid"))
-            .orderBy("updatedAt", descending: false)
+            .orderBy("updatedAt", descending: true)
             .get();
         for (var note in snap.docs) {
           notes.add(Note.fromSnapshot(note));
         }
-        // order by created if present
-        notes.sort((a, b) => ((a.created != null) & (b.created != null)) ? b.created!.compareTo(a.created!) : 0);
         return notes;
       } else {
         Get.snackbar("Error Loading", "User not logged in");
