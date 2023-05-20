@@ -7,29 +7,23 @@ import 'package:keep_app/src/notes.dart';
 class NoteController {
   static final authCtl = Get.find<AuthCtl>();
 
-  static Future<List<Note>> getData() async {
+  static Stream<QuerySnapshot> getData() {
     try {
-      final List<Note> notes = [];
       final db = FirebaseFirestore.instance;
       String uid = authCtl.user!.uid;
       if (uid.isNotEmpty) {
-        QuerySnapshot snap = await db
+        return db
             .collection('notes')
             .where("user", isEqualTo: db.doc("/users/$uid"))
             .orderBy("updatedAt", descending: true)
-            .get();
-        for (var note in snap.docs) {
-          notes.add(Note.fromSnapshot(note));
-        }
-        return notes;
+            .snapshots();
       } else {
-        Get.snackbar("Error Loading", "User not logged in");
-        return [];
+        return const Stream.empty();
       }
     } catch (e) {
       Get.snackbar("Error Loading", e.toString());
       debugPrint(e.toString());
-      return [];
+      return const Stream.empty();
     }
   }
 
