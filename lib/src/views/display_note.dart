@@ -32,9 +32,9 @@ class _DisplayNoteState extends State<DisplayNote> {
     MediaQueryData media = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget._note.title ?? "Note",
-          style: const TextStyle(fontSize: 24),
+        title: const Text(
+          "rKyv",
+          style: TextStyle(fontSize: 24),
         ),
         actions: <Widget>[
           IconButton(
@@ -84,7 +84,7 @@ class _DisplayNoteState extends State<DisplayNote> {
             child: NoteCard(
               widget._note,
               null,
-              showTitle: false,
+              showTitle: true,
               showHtml: true,
             ),
           ),
@@ -121,11 +121,14 @@ class _DisplayNoteState extends State<DisplayNote> {
       Column(
         children: snapshot.connectionState != ConnectionState.done
             ? [
-                const Center(
-                    child: Padding(
-                  padding: EdgeInsets.only(top: 20.0),
-                  child: CircularProgressIndicator(),
-                ))
+                const SizedBox(
+                  width: 324,
+                  child: Center(
+                      child: Padding(
+                    padding: EdgeInsets.only(top: 20.0),
+                    child: CircularProgressIndicator(),
+                  )),
+                )
               ]
             : getRelatedColumn(snapshot.data as List<Note>),
       ),
