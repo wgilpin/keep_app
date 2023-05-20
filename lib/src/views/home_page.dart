@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/note_controller.dart';
@@ -17,18 +18,20 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
-  Future<List<Note>> _notes = Future.value([]);
+  Stream<QuerySnapshot> _notesStream = NoteController.getData();
+  Future<List<Note>> _notesList = Future.value([]);
 
   @override
   void initState() {
     super.initState();
-    _notes = NoteController.getData();
+    _notesStream = NoteController.getData();
+    _notesList = Future.value([]);
     debugPrint("Homepage.initState");
   }
 
   void changed() {
     print("Homepage.changed");
-    _notes = NoteController.getData();
+    _notesStream = NoteController.getData();
   }
 
   @override
@@ -75,20 +78,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SafeArea(
-        child: FutureBuilder<List<Note>>(
-            future: _notes,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return const Center(child: Text("Error loading notes"));
-              }
-              if (snapshot.hasData) {
-                return SafeArea(child: CardGrid(snapshot.data!, changed));
-              }
-              return const Center(child: Text("No notes found"));
-            }),
+        child: _searchController.text.isEmpty ? getStreamGrid() : getFutureGrid(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -123,12 +113,48 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> doSearch(BuildContext context) async {
     if (_searchController.text.isEmpty) {
-      _notes = NoteController.getData();
+      _notesStream = NoteController.getData();
       setState(() {});
     } else {
       final results = await Recommender.textSearch(_searchController.text, 10, context);
-      _notes = NoteController.setData(results);
+      _notesList = NoteController.setData(results);
       setState(() {});
     }
+  }
+
+  getStreamGrid() {
+    return StreamBuilder<QuerySnapshot>(
+        stream: _notesStream,
+        builder: (context, snapshot) {
+          debugPrint("Homepage.build ${snapshot.connectionState}");
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text("Error loading notes"));
+          }
+          if (snapshot.connectionState == ConnectionState.active) {
+            List<Note> notes = snapshot.data!.docs.map((n) => Note.fromSnapshot(n)).toList();
+            return SafeArea(child: CardGrid(notes, changed));
+          }
+          return const Center(child: Text("No notes found"));
+        });
+  }
+
+  getFutureGrid() {
+    return FutureBuilder<List<Note>>(
+        future: _notesList,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text("Error loading notes"));
+          }
+          if (snapshot.hasData) {
+            return SafeArea(child: CardGrid(snapshot.data!, changed));
+          }
+          return const Center(child: Text("No notes found"));
+        });
   }
 }
