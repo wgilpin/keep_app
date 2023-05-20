@@ -19,4 +19,27 @@ index.doTextSearch(
 //       console.log(res);
 //     });
 
+// const {getFirestore, Timestamp} = require("firebase-admin/firestore");
+
+// async function setTimes() {
+//   const db = getFirestore();
+//   const notes = await db.collection("notes").get();
+//   const now = Timestamp.fromDate(new Date());
+//   for (const n of notes.docs) {
+//     if (n.data().created != null) {
+//       db.
+//           collection("notes").
+//           doc(n.id).
+//           update({"updatedAt": n.data().created});
+//     } else {
+//       db.
+//           collection("notes").
+//           doc(n.id).
+//           update({"updatedAt": now});
+//     }
+//   }
+// }
+
+// setTimes();
+
 

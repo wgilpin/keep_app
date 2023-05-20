@@ -10,7 +10,7 @@
 const {onCall} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const functions = require("firebase-functions");
-const {getFirestore} = require("firebase-admin/firestore");
+const {getFirestore, Timestamp} = require("firebase-admin/firestore");
 const {initializeApp} = require("firebase-admin/app");
 const {Configuration, OpenAIApi} = require("openai");
 const similarity = require( "compute-cosine-similarity" );
@@ -366,10 +366,16 @@ exports.noteSearch = onCall(async (req) => {
 exports.createNote = functions.firestore
     .document("notes/{noteId}")
     .onCreate((snap, context) => {
-
       // Get an object representing the document
       const newValue = snap.data();
-
+      snap.after.ref.set(
+          {
+            updatedAt: Timestamp.fromDate(new Date()),
+          }, {merge: true})
+          .catch((e) => {
+            logger.error("note onCreated - error updating note", e);
+            return false;
+          });
       return exports.updateNoteEmbeddings(
           newValue.title,
           newValue.comment,
@@ -411,6 +417,15 @@ exports.updateNote = functions.firestore
         newValue.comment != previousValue.comment? newValue.comment : null;
       const snippetChange =
         newValue.snippet != previousValue.snippet? newValue.snippet : null;
+
+      change.after.ref.set(
+          {
+            updatedAt: Timestamp.fromDate(new Date()),
+          }, {merge: true})
+          .catch((e) => {
+            logger.error("note onUpdate - error updating note", e);
+            return false;
+          });
 
       return exports.updateNoteEmbeddings(
           titleChange,
