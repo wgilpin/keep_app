@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NoteCard extends StatelessWidget {
   final int? _maxlines;
@@ -27,19 +29,16 @@ class NoteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Visibility(
-                  visible: showTitle & (_note.title != null),
-                  child: Padding(
+                if (showTitle & (_note.title != null))
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       _note.title ?? "Untitled",
                       style: TextStyle(fontSize: isSmall ? 18 : 24),
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: _note.comment != null && _note.comment!.isNotEmpty,
-                  child: Padding(
+                if (_note.comment != null && _note.comment!.isNotEmpty)
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       // maxLines: _maxlines,
@@ -48,10 +47,8 @@ class NoteCard extends StatelessWidget {
                       style: TextStyle(fontSize: isSmall ? 12 : 16),
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: (!showHtml) & (_note.snippet != null) & (!isSmall),
-                  child: Padding(
+                if ((!showHtml) & (_note.snippet != null) & (!isSmall))
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       maxLines: _maxlines,
@@ -60,31 +57,39 @@ class NoteCard extends StatelessWidget {
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: (showHtml) & (_note.snippet ?? "").isNotEmpty & (!isSmall),
-                  child: Padding(
+                if ((showHtml) & (_note.snippet ?? "").isNotEmpty & (!isSmall))
+                  Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
                         decoration: BoxDecoration(color: Colors.yellow[100]),
                         child: Html(data: _note.snippet ?? ""),
                       )),
-                ),
-                Visibility(
-                  visible: (_note.url != null) & (!isSmall),
-                  child: Padding(
+                if ((_note.url != null) & (!isSmall))
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      // maxLines: _maxlines,
-                      overflow: TextOverflow.ellipsis,
-                      _note.url ?? "",
-                      style: TextStyle(fontSize: 16, color: Colors.blue[900], decoration: TextDecoration.underline),
+                    child: InkWell(
+                      onTap: () => doLaunchUrl(_note.url),
+                      child: Text(
+                        // maxLines: _maxlines,
+                        overflow: TextOverflow.ellipsis,
+                        _note.url ?? "",
+                        style: TextStyle(fontSize: 16, color: Colors.blue[900], decoration: TextDecoration.underline),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           )),
     );
+  }
+
+  Future<void> doLaunchUrl(url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.platformDefault,
+    )) {
+      Get.snackbar("Could not launch site", url);
+    }
   }
 }
