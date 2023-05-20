@@ -99,7 +99,7 @@ class _DisplayNoteState extends State<DisplayNote> {
         mainCard(),
         Expanded(
           child: Wrap(
-            children: snapshot.data == null
+            children: snapshot.connectionState != ConnectionState.done
                 ? [
                     const Center(
                       child: Padding(
@@ -119,7 +119,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     return Flex(direction: Axis.horizontal, children: [
       Expanded(child: Align(alignment: Alignment.topCenter, child: mainCard())),
       Column(
-        children: snapshot.data == null
+        children: snapshot.connectionState != ConnectionState.done
             ? [
                 const Center(
                     child: Padding(
@@ -153,7 +153,6 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   getRelatedColumn(List<Note> related) {
-    debugPrint("related notes : ${related.map((n) => n.title).toList()}}}");
     return related.isNotEmpty
         ? related
             .map(
