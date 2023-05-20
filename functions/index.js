@@ -57,7 +57,6 @@ async function getOpenaiKey() {
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
 async function getTextEmbedding(text, model="text-embedding-ada-002") {
-  logger.debug("getTextEmbedding", {text, model});
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY || await getOpenaiKey(),
     organization: "org-WdPppWM3ixsbsP3FgYID3E9K",
@@ -96,7 +95,7 @@ async function getMyNotes(uid) {
  * @param {string} text the text to search for
  * @param {myNotes} notes the notes to search
  * @param {number} count the max number of notes to return
- * @return {Array<object>} the most similar notes sorted by similarity
+ * @return {Array<String>} ids of most similar notes sorted by similarity
  */
 async function getSimilarToText(text, notes, count = 10) {
   const textVector = await getTextEmbedding(text);
@@ -225,15 +224,14 @@ async function vecSimilarRanked(
   const promises = [];
   for (const n of notes.docs) {
     if (n.id != originalId) {
-      promises.push(await getNoteEmbeddings(n.id));
-    } else {
-      promises.push([]);
+      promises.push(getNoteEmbeddings(n.id));
     }
   }
   const vecs = await Promise.all(promises);
+
   // vecs is now 3 embeddings for each note
   // we have all the results, now calculate the similarity
-  const similarityScores = {};
+  const similarityScores = {}; // id: score
   for (let i=0; i < vecs.length; i++) {
     // for a note with embs 'noteVec', calculate the similarity
     const score = getNoteSimilarity(vecs[i], searchVecs);
@@ -242,15 +240,17 @@ async function vecSimilarRanked(
     }
   }
   // Sort score scores in descending order
+  // -> list of [id, score]
   const sortedScores = Object.entries(
       similarityScores).sort((a, b) => b[1] - a[1]);
 
   // Retrieve the top 'count' notes
+  // -> list of ids
   const rankedNotes = sortedScores
       .slice(0, count)
       .map((score) => score[0]);
 
-  return Array(rankedNotes);
+  return rankedNotes;
 }
 
 /**
@@ -262,42 +262,40 @@ async function vecSimilarRanked(
  */
 exports.doTextSearch = async function(searchText, maxResults, uid) {
   const notes = await getMyNotes(uid);
-  const results = [];
-  const resultSet = {};
+  const results = new Set();
 
   if (notes.length == 0) {
     logger.debug("textSearch - no notes", uid);
     return [];
   }
 
+  const searchTextLower = searchText.toLowerCase();
   for (const snap of notes.docs) {
     const note = snap.data();
     if (
-      note.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      note.comment.toLowerCase().includes(searchText.toLowerCase()) ||
-      note.snippet.toLowerCase().includes(searchText.toLowerCase())
+      note.title.toLowerCase().includes(searchTextLower) ||
+      note.comment.toLowerCase().includes(searchTextLower) ||
+      note.snippet.toLowerCase().includes(searchTextLower)
     ) {
-      results.push(note);
-      resultSet[snap.id] = true;
+      results.add(snap.id);
     }
   }
 
-  if (results.length < maxResults) {
+  if (results.size < maxResults) {
     const searchResults = await getSimilarToText(
         searchText,
         notes,
-        maxResults - results.length);
+        maxResults - results.size);
     for (const r of searchResults) {
-      if (! (r in resultSet)) {
-        results.push(r);
-      }
+      results.add(r);
     }
   }
-  return results;
+
+  const retValue = Array.from(results);
+  return retValue;
 };
 
-/**
- * FUNCTION: search for text in the notes
+/** FUNCTION: search for text in the notes
  * @param {Object} req - The parameters object.
  * @param {string} req.searchText - The search text.
  * @param {number} req.maxResults - The maximum number of results.
@@ -368,7 +366,6 @@ exports.noteSearch = onCall(async (req) => {
 exports.createNote = functions.firestore
     .document("notes/{noteId}")
     .onCreate((snap, context) => {
-      logger.debug("createNote", context.params.noteId);
 
       // Get an object representing the document
       const newValue = snap.data();
@@ -401,7 +398,6 @@ exports.deleteNote = functions.firestore
 exports.updateNote = functions.firestore
     .document("notes/{noteId}")
     .onUpdate((change, context) => {
-      logger.debug("updateNote", context.params.noteId);
       // Get an object representing the document
       const newValue = change.after.data();
 
