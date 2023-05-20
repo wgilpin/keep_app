@@ -8,20 +8,31 @@ import 'package:keep_app/src/views/recommend.dart';
 
 import 'profile.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
-  final nc = Get.put(NoteController());
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  Future<List<Note>> _notes = Future.value([]);
+
+  @override
+  void initState() {
+    super.initState();
+    _notes = NoteController.getData();
+    debugPrint("Homepage.initState");
+  }
 
   void changed() {
     print("Homepage.changed");
-    nc.getData();
+    _notes = NoteController.getData();
   }
 
   @override
   Widget build(BuildContext context) {
-    nc.getData();
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -33,13 +44,19 @@ class HomePage extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 270),
             // Use a Material design search bar
             child: TextField(
+              onSubmitted: (_) {
+                doSearch(context);
+              },
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search...',
                 // Add a clear button to the search bar
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () => _searchController.clear(),
+                  onPressed: () {
+                    _searchController.clear();
+                    doSearch(context);
+                  },
                 ),
                 // Add a search icon or button to the search bar
                 prefixIcon: IconButton(
@@ -58,9 +75,20 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Obx(() => nc.isLoading.value
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(child: CardGrid(nc.notes, changed))),
+        child: FutureBuilder<List<Note>>(
+            future: _notes,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text("Error loading notes"));
+              }
+              if (snapshot.hasData) {
+                return SafeArea(child: CardGrid(snapshot.data!, changed));
+              }
+              return const Center(child: Text("No notes found"));
+            }),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -95,10 +123,12 @@ class HomePage extends StatelessWidget {
 
   Future<void> doSearch(BuildContext context) async {
     if (_searchController.text.isEmpty) {
-      nc.getData();
+      _notes = NoteController.getData();
+      setState(() {});
     } else {
       final results = await Recommender.textSearch(_searchController.text, 10, context);
-      nc.setData(results);
+      _notes = NoteController.setData(results);
+      setState(() {});
     }
   }
 }
