@@ -9,14 +9,19 @@ class Recommender {
     final functions = FirebaseFunctions.instance;
     final callable = functions.httpsCallable('textSearch');
     final data = {"searchText": text, "maxResults": count};
+
+    List<String> results = [];
     try {
-      final results = await callable.call(data);
-      debugPrint(results.data);
-      return results.data == null ? [] : results.data[0].map((n) => n.toString()).toList();
+      final fnResults = await callable.call(data);
+      if (fnResults.data != null) {
+        for (final id in fnResults.data) {
+          if (id != null) results.add(id.toString());
+        }
+      }
     } on FirebaseFunctionsException catch (e) {
       debugPrint('Failed to call function: ${e.message}');
-      return [];
     }
+    return results;
   }
 
   static Future<List<String>> noteSearch(Note note, int count, context) async {
@@ -29,7 +34,7 @@ class Recommender {
         return [];
       }
       final List<String> res = [];
-      for (var n in results.data[0]) {
+      for (var n in results.data) {
         res.add(n.toString());
       }
       return res;
