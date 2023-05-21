@@ -3,9 +3,13 @@ import 'dart:html';
 
 Object platformPluginMethod() {
   // for the chrome extension, send a message to close the popup
-  window.postMessage("closePopup", "*");
+  try {
+    window.postMessage("closePopup", "*");
 
-  IFrameElement element = document.getElementById('iframe') as IFrameElement;
-  element.contentWindow?.postMessage("closePopup", '*');
-  return Object();
+    IFrameElement element = document.getElementById('iframe') as IFrameElement;
+    element.contentWindow?.postMessage("closePopup", '*');
+    return Object();
+  } catch (e) {
+    return Object();
+  }
 }

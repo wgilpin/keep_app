@@ -4,6 +4,34 @@ import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class SmallNoteCard extends StatelessWidget {
+  final String title;
+  final Function? onTapped;
+
+  const SmallNoteCard(this.title, {this.onTapped, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 300, minHeight: 100),
+      child: Card(
+          color: Colors.yellow[200],
+          child: InkWell(
+            onTap: () {
+              onTapped?.call();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+          )),
+    );
+  }
+}
+
 class NoteCard extends StatelessWidget {
   final int? _maxlines;
   final Note _note;
@@ -29,7 +57,7 @@ class NoteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (showTitle & (_note.title != null))
+                if (_note.title != null)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(

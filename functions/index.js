@@ -26,7 +26,10 @@ exports.setupNewUser = functions.auth.user().onCreate((user) => {
       collection("users").
       doc(user.uid).
       set(
-          {"display_name": user.displayName||user.email||"anon"},
+          {
+            "display_name": user.displayName||user.email||"anon",
+            "lastUpdated": Timestamp.now(),
+          },
           {merge: true} );
   logger.debug("New user created", {uid: user.uid});
   return res;
@@ -175,6 +178,7 @@ exports.updateNoteEmbeddings= async (title, comment, snippet, noteId) => {
     updates["commentVector"] = await getTextEmbedding(comment);
   }
 
+  logger.debug("updateNoteEmbeddings", noteId);
   // write any updates to the db
   return getFirestore()
       .collection("embeddings")
@@ -209,18 +213,49 @@ function getNoteSimilarity(noteVecs, searchVecs) {
   }
   return maxSimilarity;
 }
+
+/**
+ * cache the related notes to the original note
+ * @param {Array<string>} rankedNotes the ranked notes
+ * @param {Array<dict>} related the related notes
+ * @param {string} originalId the id of the original note
+ * @param {string} userId the id of the user
+ * @return {void}
+ **/
+function cacheRelated(rankedNotes, related, originalId, userId) {
+  const now = Timestamp.fromDate(new Date());
+
+
+  // update the related notes for the original note
+  getFirestore()
+      .collection("notes")
+      .doc(originalId)
+      .set({
+        related,
+        relatedUpdated: now,
+      }, {merge: true});
+
+  // update the lastUpdated timestamp for the user
+  getFirestore()
+      .collection("users")
+      .doc(userId)
+      .set({"lastUpdated": now}, {merge: true});
+}
+
+
 /**
   * get the 10 most similar notes to a search vector
   * @param {Array<Array<number>>} searchVecs array of the vectors to search for
 *                                (eg title, snippet, comment), or maybe just one
   * @param {Array<QueryDocumentSnapshot>} notes the notes to search through
   * @param {string} originalId the id of the note we are searching for, or null
+  * @param {string} userId the id of the note's owner
   * @param {number} count the number of notes to return
   * @param {number} threshold the minimum similarity score to return
   * @return {Array<String>} the ids of most similar notes sorted by similarity
   */
 async function vecSimilarRanked(
-    searchVecs, notes, originalId, count = 10, threshold = 0.7) {
+    searchVecs, notes, originalId, userId, count = 10, threshold = 0.7) {
   const promises = [];
   for (const n of notes.docs) {
     if (n.id != originalId) {
@@ -250,7 +285,17 @@ async function vecSimilarRanked(
       .slice(0, count)
       .map((score) => score[0]);
 
-  return rankedNotes;
+  const related = rankedNotes.map((id) => {
+    return {
+      id,
+      title: notes.docs.find((n) => n.id == id).data().title,
+    };
+  });
+
+  // cache the related notes to the original note
+  // get an array of {id, title, updated} for the related notes
+  cacheRelated(rankedNotes, related, originalId, userId);
+  return related;
 }
 
 /**
@@ -321,6 +366,15 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
 
   // only search if there are text fields
   if (title || comment || snippet) {
+    // does the original note have a valid related cache?
+    if (note.data().related) {
+      const user = await getFirestore().collection("users").doc(uid).get();
+      if (user.data().lastUpdated >= note.data().relatedUpdated) {
+        return note.data().related;
+      }
+    }
+
+    // we didn't find a valid cache, so search for related notes
     const notes = await getMyNotes(uid);
 
     // if the user has no other notes, return empty
@@ -336,6 +390,7 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
         vector,
         notes,
         noteId,
+        note.data().user.id,
         maxResults);
     return searchResults;
   } else {
@@ -369,7 +424,6 @@ exports.createNote = functions.firestore
       // Get an object representing the documenttry {
       try {
         const newValue = snap.data();
-        logger.debug("createNote 1", snap);
         getFirestore()
             .collection("notes")
             .doc(context.params.noteId)
@@ -381,7 +435,15 @@ exports.createNote = functions.firestore
               logger.error("note onCreated - error updating note", e);
               return false;
             });
-        logger.debug("createNote 2", context.params.noteId);
+        // record the update time to the user record
+        const now = Timestamp.fromDate(new Date());
+        getFirestore()
+            .collection("users")
+            .doc(snap.data().user.id)
+            .update({
+              "lastUpdated": now,
+            });
+
         return exports.updateNoteEmbeddings(
             newValue.title,
             newValue.comment,
@@ -400,7 +462,6 @@ exports.createNote = functions.firestore
 exports.deleteNote = functions.firestore
     .document("notes/{noteId}")
     .onDelete((_, context) => {
-      logger.debug("deleteNote", context.params.noteId);
       return getFirestore()
           .collection("embeddings")
           .doc(context.params.noteId)
@@ -414,37 +475,52 @@ exports.deleteNote = functions.firestore
 exports.updateNote = functions.firestore
     .document("notes/{noteId}")
     .onUpdate((change, context) => {
-      // Get an object representing the document
-      const newValue = change.after.data();
+      try {
+        // Get an object representing the document
+        const newValue = change.after.data();
 
-      // and the previous value before this update
-      const previousValue = change.before.data();
+        // and the previous value before this update
+        const previousValue = change.before.data();
 
-      // we will pass either the changed title, comment or snippet or nulls
-      const titleChange =
-        newValue.title != previousValue.title? newValue.title : null;
-      const commentChange =
-        newValue.comment != previousValue.comment? newValue.comment : null;
-      const snippetChange =
-        newValue.snippet != previousValue.snippet? newValue.snippet : null;
+        // we will pass either the changed title, comment or snippet or nulls
+        const titleChange =
+          newValue.title != previousValue.title? newValue.title : null;
+        const commentChange =
+          newValue.comment != previousValue.comment? newValue.comment : null;
+        const snippetChange =
+          newValue.snippet != previousValue.snippet? newValue.snippet : null;
 
-      // don't update if ~now already to avoid recursion
-      const now = Timestamp.fromDate(new Date());
-      // 500ms since last update? ignore
-      if (now - change.before.data().updatedAt > 500) {
-        change.after.ref.set(
-            {
-              updatedAt: Timestamp.fromDate(new Date()),
-            }, {merge: true})
-            .catch((e) => {
-              logger.error("note onUpdate - error updating note", e);
-              return false;
-            });
+        // don't update if ~now already to avoid recursion
+        const now = Timestamp.fromDate(new Date());
+        // 500ms since last update? ignore
+        if (titleChange || commentChange || snippetChange ) {
+          if (now - change.before.data().updatedAt > 500) {
+            change.after.ref.set(
+                {
+                  updatedAt: Timestamp.fromDate(new Date()),
+                }, {merge: true})
+                .catch((e) => {
+                  logger.error("note onUpdate - error updating note", e);
+                  return false;
+                });
+
+            // record the update time to the user record
+            getFirestore()
+                .collection("users")
+                .doc(newValue.user.id)
+                .update({
+                  "lastUpdated": now,
+                });
+          }
+        }
+        return exports.updateNoteEmbeddings(
+            titleChange,
+            commentChange,
+            snippetChange,
+            context.params.noteId);
+      } catch (error) {
+        logger.error("note onUpdate - error", error);
+        return [];
       }
-
-      return exports.updateNoteEmbeddings(
-          titleChange,
-          commentChange,
-          snippetChange,
-          context.params.noteId);
     });
+

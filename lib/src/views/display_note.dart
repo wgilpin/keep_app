@@ -11,15 +11,14 @@ class DisplayNote extends StatefulWidget {
   DisplayNote(Note note, this.onChanged, {super.key}) : _note = note;
 
   Note _note;
-  Function? onChanged;
-  Function? onSmallCardTap;
+  final Function? onChanged;
 
   @override
   State<DisplayNote> createState() => _DisplayNoteState();
 }
 
 class _DisplayNoteState extends State<DisplayNote> {
-  late Future<List<Note>> relatedNotes;
+  late Future<List<Map<String, String>>> relatedNotes;
 
   @override
   initState() {
@@ -108,7 +107,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                       ),
                     )
                   ]
-                : getRelatedColumn(snapshot.data as List<Note>),
+                : getRelatedColumn(snapshot.data as List<Map<String, String>>),
           ),
         ),
       ],
@@ -130,44 +129,36 @@ class _DisplayNoteState extends State<DisplayNote> {
                   )),
                 )
               ]
-            : getRelatedColumn(snapshot.data as List<Note>),
+            : getRelatedColumn(snapshot.data as List<Map<String, String>>),
       ),
     ]);
   }
 
-  Future<List<Note>> getRelatedNotes() async {
+  Future<List<Map<String, String>>> getRelatedNotes() async {
     // return [note, note, note, note, note, note];
-    final List<String> ids = await Recommender.noteSearch(widget._note, 9, context);
-    debugPrint("related notes : $ids");
-    final promises = [
-      for (var i in ids)
-        if (i != widget._note.id) getNote(i)
-    ];
-    // final promises = ids.map((id) => getNote(id));
-    return Future.wait(promises);
+    final List<Map<String, String>> related = await Recommender.noteSearch(widget._note, 9, context);
+    return related;
   }
 
-  onCardTapped(note) {
+  onCardTapped(noteId) async {
     print("displayNote.onCardTapped");
+    widget._note = await getNote(noteId);
     setState(() {
-      widget._note = note;
       relatedNotes = getRelatedNotes();
     });
   }
 
-  getRelatedColumn(List<Note> related) {
+  getRelatedColumn(List<Map<String, String>> related) {
     return related.isNotEmpty
         ? related
             .map(
-              (n) => Padding(
+              (r) => Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: SizedBox(
                   width: 300,
-                  child: NoteCard(
-                    n,
-                    null,
-                    onTapped: () => onCardTapped(n),
-                    isSmall: true,
+                  child: SmallNoteCard(
+                    r["title"] ?? "Empty Note",
+                    onTapped: () => onCardTapped(r["id"]),
                   ),
                 ),
               ),

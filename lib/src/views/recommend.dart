@@ -24,7 +24,7 @@ class Recommender {
     return results;
   }
 
-  static Future<List<String>> noteSearch(Note note, int count, context) async {
+  static Future<List<Map<String, String>>> noteSearch(Note note, int count, context) async {
     final functions = FirebaseFunctions.instance;
     final callable = functions.httpsCallable('noteSearch');
     final data = {"noteId": note.id, "maxResults": count};
@@ -33,9 +33,12 @@ class Recommender {
       if (results.data == null) {
         return [];
       }
-      final List<String> res = [];
-      for (var n in results.data) {
-        res.add(n.toString());
+      final List<Map<String, String>> res = [];
+      for (var e in results.data) {
+        res.add({
+          "id": e["id"],
+          "title": e["title"],
+        });
       }
       return res;
     } on FirebaseFunctionsException catch (e) {
