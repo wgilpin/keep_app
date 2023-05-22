@@ -26,7 +26,7 @@ ThemeData makeTheme() {
       fillColor: Colors.yellow[200],
     ),
     textSelectionTheme: TextSelectionThemeData(
-      cursorColor: Colors.brown[900],
+      cursorColor: Colors.brown[800],
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -34,7 +34,14 @@ ThemeData makeTheme() {
     )),
     textButtonTheme: TextButtonThemeData(
         style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.brown[900],
+      foregroundColor: Colors.brown[800],
     )),
+    iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+      foregroundColor: Colors.brown[700],
+    )),
+    iconTheme: IconThemeData(
+      color: Colors.brown[700],
+    ),
   );
 }

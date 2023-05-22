@@ -136,6 +136,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
         automaticallyImplyLeading: widget._note != null,
         actions: <Widget>[
           IconButton(
+            color: Colors.brown[600],
             onPressed: saveNote,
             icon: const Icon(Icons.save),
             iconSize: 36,

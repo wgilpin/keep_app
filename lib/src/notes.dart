@@ -6,6 +6,7 @@ class Note {
   String? comment;
   String? snippet;
   String? url;
+  bool isPinned = false;
   DocumentReference? user;
   DateTime? created;
 
@@ -17,6 +18,7 @@ class Note {
     comment = snapshot.data()['comment'];
     snippet = snapshot.data()['snippet'];
     url = snapshot.data()['url'];
+    isPinned = snapshot.data()['isPinned'] ?? false;
     if (snapshot.data()['created'] != null) {
       created = snapshot.data()['created'].toDate();
     }
@@ -28,6 +30,7 @@ class Note {
     comment = mappedNote['comment'];
     snippet = mappedNote['snippet'];
     url = mappedNote['url'];
+    isPinned = mappedNote['isPinned'];
     created = mappedNote['created']?.toDate();
   }
 
@@ -39,6 +42,7 @@ class Note {
       if (url != null) "url": url,
       if (user != null) "user": user,
       if (created != null) "created": created,
+      "isPinned": isPinned,
     };
   }
 }

@@ -8,18 +8,24 @@ import 'package:keep_app/src/views/display_note.dart';
 import 'package:keep_app/src/views/note_card.dart';
 
 class CardGrid extends StatelessWidget {
-  CardGrid(List<Note> notes, this.onUpdate, {super.key}) : _notes = notes;
+  CardGrid(List<Note> notes, this.onUpdate, this.onPinned, {super.key}) : _notes = notes;
 
-  Function()? onUpdate;
+  late Function()? onUpdate;
+  late Function(String, bool)? onPinned;
   final List<Note> _notes;
 
   onNoteTapped(note) {
-    print("CardGrid.onNoteTapped");
-    Get.to(DisplayNote(note, onUpdate));
+    debugPrint("CardGrid.onNoteTapped");
+    Get.to(DisplayNote(
+      note,
+      onChanged: onUpdate,
+      onPinned: onPinned,
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
+    sortNotesByPinned();
     MediaQueryData media = MediaQuery.of(context);
     int numColumns = max(1, media.size.width / 300 ~/ 1);
     debugPrint("numColumns: $numColumns");
@@ -38,11 +44,27 @@ class CardGrid extends StatelessWidget {
               _notes[index],
               20,
               onTapped: () => onNoteTapped(_notes[index]),
+              onPinned: onPinned,
               showHtml: true,
             ),
           );
         },
       ),
     );
+  }
+
+  void sortNotesByPinned() {
+    List<Note> pinned = [];
+    List<Note> unPinned = [];
+    for (var note in _notes) {
+      if (note.isPinned) {
+        pinned.add(note);
+      } else {
+        unPinned.add(note);
+      }
+    }
+    _notes.clear();
+    _notes.addAll(pinned);
+    _notes.addAll(unPinned);
   }
 }

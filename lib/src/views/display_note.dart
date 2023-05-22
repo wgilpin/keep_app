@@ -8,10 +8,11 @@ import 'package:keep_app/src/views/note_card.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
 class DisplayNote extends StatefulWidget {
-  DisplayNote(Note note, this.onChanged, {super.key}) : _note = note;
+  DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _note = note;
 
   Note _note;
   final Function? onChanged;
+  final Function(String, bool)? onPinned;
 
   @override
   State<DisplayNote> createState() => _DisplayNoteState();
@@ -26,6 +27,15 @@ class _DisplayNoteState extends State<DisplayNote> {
     relatedNotes = getRelatedNotes();
   }
 
+  void doPinnedChange(String id, bool state) {
+    debugPrint('DisplayNote.doPinnedChange');
+
+    setState(() {
+      widget._note.isPinned = state;
+    });
+    widget.onPinned?.call(widget._note!.id!, state);
+  }
+
   @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
@@ -37,6 +47,7 @@ class _DisplayNoteState extends State<DisplayNote> {
         ),
         actions: <Widget>[
           IconButton(
+            color: Colors.brown[600],
             onPressed: () {
               Get.to(EditNoteForm(widget._note))?.then(
                 (updatedNoteID) async {
@@ -83,6 +94,7 @@ class _DisplayNoteState extends State<DisplayNote> {
             child: NoteCard(
               widget._note,
               null,
+              onPinned: doPinnedChange,
               showTitle: true,
               showHtml: true,
             ),

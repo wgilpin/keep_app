@@ -29,9 +29,19 @@ class _HomePageState extends State<HomePage> {
     debugPrint("Homepage.initState");
   }
 
-  void changed() {
+  void doChanged() {
     print("Homepage.changed");
     _notesStream = NoteController.getData();
+  }
+
+  onPinnedNote(String noteId, bool value) async {
+    print("CardGrid.onPinned");
+    // write note to firestore
+    debugPrint('toggle pinned for $noteId}}');
+    await FirebaseFirestore.instance.collection("notes").doc(noteId).update({"isPinned": value});
+    setState(() {
+      _notesStream = NoteController.getData();
+    });
   }
 
   @override
@@ -131,11 +141,12 @@ class _HomePageState extends State<HomePage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
+            debugPrint('Snapshot error: ${snapshot.error}');
             return const Center(child: Text("Error loading notes"));
           }
           if (snapshot.connectionState == ConnectionState.active) {
             List<Note> notes = snapshot.data!.docs.map((n) => Note.fromSnapshot(n)).toList();
-            return SafeArea(child: CardGrid(notes, changed));
+            return SafeArea(child: CardGrid(notes, doChanged, onPinnedNote));
           }
           return const Center(child: Text("No notes found"));
         });
@@ -149,10 +160,11 @@ class _HomePageState extends State<HomePage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
+            debugPrint('Snapshot error: ${snapshot.error}');
             return const Center(child: Text("Error loading notes"));
           }
           if (snapshot.hasData) {
-            return SafeArea(child: CardGrid(snapshot.data!, changed));
+            return SafeArea(child: CardGrid(snapshot.data!, doChanged, onPinnedNote));
           }
           return const Center(child: Text("No notes found"));
         });

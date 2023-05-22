@@ -38,76 +38,98 @@ class NoteCard extends StatelessWidget {
   final bool showTitle;
   final bool showHtml;
   final Function? onTapped;
-  final bool isSmall;
+  final Function(String, bool)? onPinned;
 
   const NoteCard(this._note, this._maxlines,
-      {this.onTapped, this.showTitle = true, this.showHtml = false, this.isSmall = false, super.key});
+      {this.onTapped, this.onPinned, this.showTitle = true, this.showHtml = false, super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(maxWidth: isSmall ? 300 : 1200, minHeight: 100),
+      constraints: const BoxConstraints(maxWidth: 1200, minHeight: 100),
       child: Card(
-          color: Colors.yellow[200],
-          child: InkWell(
-            onTap: () {
-              print("NoteCard.onTap");
-              onTapped?.call();
-            },
-            child: Column(
+        color: Colors.yellow[200],
+        child: Column(
+          children: [
+            Flex(
+              direction: Axis.horizontal,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (_note.title != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      _note.title ?? "Untitled",
-                      style: TextStyle(fontSize: isSmall ? 18 : 24),
-                    ),
-                  ),
-                if (_note.comment != null && _note.comment!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      // maxLines: _maxlines,
-                      overflow: TextOverflow.ellipsis,
-                      _note.comment ?? "",
-                      style: TextStyle(fontSize: isSmall ? 12 : 16),
-                    ),
-                  ),
-                if ((!showHtml) & (_note.snippet != null) & (!isSmall))
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      maxLines: _maxlines,
-                      overflow: TextOverflow.ellipsis,
-                      _note.snippet ?? "",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                if ((showHtml) & (_note.snippet ?? "").isNotEmpty & (!isSmall))
-                  Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(color: Colors.yellow[100]),
-                        child: Html(data: _note.snippet ?? ""),
-                      )),
-                if ((_note.url != null) & (!isSmall))
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  Expanded(
                     child: InkWell(
-                      onTap: () => doLaunchUrl(_note.url),
-                      child: Text(
-                        // maxLines: _maxlines,
-                        overflow: TextOverflow.ellipsis,
-                        _note.url ?? "",
-                        style: TextStyle(fontSize: 16, color: Colors.blue[900], decoration: TextDecoration.underline),
+                      onTap: () {
+                        debugPrint("NoteCard.onTap");
+                        onTapped?.call();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8, right: 0, top: 8, bottom: 8),
+                        child: Text(
+                          _note.title ?? "Untitled",
+                          style: const TextStyle(fontSize: 24),
+                        ),
                       ),
                     ),
                   ),
+                IconButton(
+                  onPressed: () => doPinned(),
+                  icon: Icon(_note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                )
               ],
             ),
-          )),
+            InkWell(
+              onTap: () {
+                debugPrint("NoteCard.onTap");
+                onTapped?.call();
+              },
+              child: Column(
+                children: [
+                  if (_note.comment != null && _note.comment!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        // maxLines: _maxlines,
+                        overflow: TextOverflow.ellipsis,
+                        _note.comment ?? "",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  if ((!showHtml) & (_note.snippet != null))
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        maxLines: _maxlines,
+                        overflow: TextOverflow.ellipsis,
+                        _note.snippet ?? "",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  if ((showHtml) & (_note.snippet ?? "").isNotEmpty)
+                    Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.yellow[100]),
+                          child: Html(data: _note.snippet ?? ""),
+                        )),
+                ],
+              ),
+            ),
+            if (_note.url != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: InkWell(
+                  onTap: () => doLaunchUrl(_note.url),
+                  child: Text(
+                    // maxLines: _maxlines,
+                    overflow: TextOverflow.ellipsis,
+                    _note.url ?? "",
+                    style: TextStyle(fontSize: 16, color: Colors.blue[900], decoration: TextDecoration.underline),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -119,5 +141,10 @@ class NoteCard extends StatelessWidget {
     )) {
       Get.snackbar("Could not launch site", url);
     }
+  }
+
+  doPinned() {
+    debugPrint("doPinned ${_note.id}, ${!_note.isPinned}");
+    onPinned?.call(_note.id!, !_note.isPinned);
   }
 }
