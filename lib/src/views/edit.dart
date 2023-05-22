@@ -16,13 +16,14 @@ class EditNoteForm extends StatefulWidget {
   final String? snippet;
   final String? comment;
   final String? url;
+  final bool showBack;
 
   /// EditNoteForm constructor
   ///
   /// If the note is not null, then we are editing an existing note.
   /// If the note is null, then we are creating a new note.
   /// If you supply title / comment / snippet / url they will be used as the default values in the form.
-  const EditNoteForm(this._note, {this.title, this.comment, this.snippet, this.url, super.key});
+  const EditNoteForm(this._note, {this.title, this.comment, this.snippet, this.url, this.showBack = false, super.key});
 
   @override
   State<EditNoteForm> createState() => _EditNoteFormState();
@@ -133,7 +134,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
           'Edit Note',
           style: TextStyle(fontSize: 16),
         ),
-        automaticallyImplyLeading: widget._note != null,
+        automaticallyImplyLeading: (widget._note != null) || !widget.showBack,
         actions: <Widget>[
           IconButton(
             color: Colors.brown[600],

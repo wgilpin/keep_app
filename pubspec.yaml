@@ -44,6 +44,9 @@ dependencies:
   flutter_html: ^3.0.0-beta.1
   cloud_functions: ^4.3.0
   url_launcher: ^6.1.11
+  receive_sharing_intent:
+    git:
+      url: https://github.com/Thogsit/receive_sharing_intent
 
 dev_dependencies:
   flutter_test:

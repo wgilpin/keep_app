@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 
@@ -28,18 +31,63 @@ Future<void> main() async {
     } catch (e) {
       debugPrint('Failed to use local Firestore emulator: $e');
       // ignore: avoid_print
-      print(e);
+      debugPrint(e.toString());
     }
   } else {
     debugPrint('Using remote Firestore');
   }
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
+  late StreamSubscription _intentDataStreamSubscription;
+
+  /// Opens the edit page with the given text
+  void openEditPage(value) {
+    if (value != null) {
+      // urls are treated differently
+      final bool isUrl = (value ?? "").toLowerCase().startsWith("http");
+      debugPrint('Got shared ${isUrl ? "url" : "text"}: $value');
+
+      Get.to(EditNoteForm(
+        null,
+        snippet: isUrl ? null : value,
+        url: isUrl ? value : null,
+      ));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // For sharing or opening urls/text coming from outside the app while the app is in the memory
+    _intentDataStreamSubscription = ReceiveSharingIntent.getTextStream().listen((String value) {
+      openEditPage(value);
+    }, onError: (err) {
+      debugPrint("getLinkStream error: $err");
+    });
+
+    // For sharing or opening urls/text coming from outside the app while the app is closed
+    ReceiveSharingIntent.getInitialText().then((String? value) {
+      openEditPage(value);
+    });
+  }
+
+  @override
+  void dispose() {
+    _intentDataStreamSubscription.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     Get.changeTheme(makeTheme());
