@@ -47,6 +47,7 @@ dependencies:
   receive_sharing_intent:
     git:
       url: https://github.com/Thogsit/receive_sharing_intent
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +100,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon48.png"
