@@ -42,17 +42,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/android/
 
 .venv/
 .idea/
 
 /functions/venv/
-/ios/
 /macos/
 /windows/
-/web/
-!/web/index.html
 /linux/
 /public/
 /testing.env
