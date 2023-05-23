@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   Stream<QuerySnapshot> _notesStream = NoteController.getData();
   Future<List<Note>> _notesList = Future.value([]);
+  bool _loading = false;
 
   @override
   void initState() {
@@ -88,7 +89,9 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SafeArea(
-        child: _searchController.text.isEmpty ? getStreamGrid() : getFutureGrid(),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : (_searchController.text.isEmpty ? getStreamGrid() : getFutureGrid()),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -126,9 +129,15 @@ class _HomePageState extends State<HomePage> {
       _notesStream = NoteController.getData();
       setState(() {});
     } else {
-      final results = await Recommender.textSearch(_searchController.text, 10, context);
-      _notesList = NoteController.setData(results);
-      setState(() {});
+      setState(() {
+        _loading = true;
+      });
+      Recommender.textSearch(_searchController.text, 10, context).then((results) {
+        _notesList = NoteController.setData(results);
+        setState(() {
+          _loading = false;
+        });
+      });
     }
   }
 
