@@ -5,23 +5,28 @@ import 'package:keep_app/src/notes.dart';
 /// Class to call the recommender cloud functions
 class Recommender {
   /// Call the cloud function to get recommendations based on a text string
-  static Future<List<String>> textSearch(String text, int count, context) async {
+  static Future<List<Map<String, String>>> textSearch(String text, int count, context) async {
     final functions = FirebaseFunctions.instance;
     final callable = functions.httpsCallable('textSearch');
     final data = {"searchText": text, "maxResults": count};
 
-    List<String> results = [];
     try {
-      final fnResults = await callable.call(data);
-      if (fnResults.data != null) {
-        for (final id in fnResults.data) {
-          if (id != null) results.add(id.toString());
-        }
+      final results = await callable.call(data);
+      if (results.data == null) {
+        return [];
       }
+      final List<Map<String, String>> res = [];
+      for (var e in results.data) {
+        res.add({
+          "id": e["id"],
+          "title": e["title"],
+        });
+      }
+      return res;
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('Failed to call function: ${e.message}');
+      debugPrint('noteSearch Failed to call textSearch: ${e.message}');
+      return [];
     }
-    return results;
   }
 
   static Future<List<Map<String, String>>> noteSearch(Note note, int count, context) async {

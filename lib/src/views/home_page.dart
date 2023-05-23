@@ -133,7 +133,11 @@ class _HomePageState extends State<HomePage> {
         _loading = true;
       });
       Recommender.textSearch(_searchController.text, 10, context).then((results) {
-        _notesList = NoteController.setData(results);
+        List<String> ids = [];
+        for (var r in results) {
+          r["id"] != null ? ids.add(r["id"]!) : {};
+        }
+        _notesList = NoteController.setData(ids);
         setState(() {
           _loading = false;
         });

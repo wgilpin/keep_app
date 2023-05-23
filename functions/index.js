@@ -252,7 +252,7 @@ function cacheRelated(rankedNotes, related, originalId, userId) {
   * @param {string} userId the id of the note's owner
   * @param {number} count the number of notes to return
   * @param {number} threshold the minimum similarity score to return
-  * @return {Array<String>} the ids of most similar notes sorted by similarity
+  * @return {Array<{id, title}>} ids of most similar notes sorted by similarity
   */
 async function vecSimilarRanked(
     searchVecs, notes, originalId, userId, count = 10, threshold = 0.7) {
@@ -407,7 +407,7 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
  * @param {Object} req - The parameters object.
  * @param {string} req.noteId - ID of the note to compare
  * @param {number} req.maxResults - The maximum number of results.
- * @return {Array<object>} the most similar notes sorted by similarity
+ * @return {Array<{id, title}>} the most similar notes sorted by similarity
  */
 exports.noteSearch = onCall(async (req) => {
   const {noteId, maxResults} = req.data;
