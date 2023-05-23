@@ -293,8 +293,10 @@ async function vecSimilarRanked(
   });
 
   // cache the related notes to the original note
-  // get an array of {id, title, updated} for the related notes
-  cacheRelated(rankedNotes, related, originalId, userId);
+  if (originalId) {
+    // get an array of {id, title, updated} for the related notes
+    cacheRelated(rankedNotes, related, originalId, userId);
+  }
   return related;
 }
 
