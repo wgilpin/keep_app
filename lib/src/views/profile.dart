@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
 class Profile extends StatelessWidget {
@@ -12,10 +13,15 @@ class Profile extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: const Text('rKyv'),
       ),
-      body: const Center(
-        child: Text(
-          'Profile Page',
-          style: TextStyle(fontSize: 24),
+      body: Center(
+        child: Column(
+          children: [
+            const Text(
+              'Profile Page',
+              style: TextStyle(fontSize: 24),
+            ),
+            ElevatedButton(onPressed: doLogout, child: const Text('Logout')),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -40,5 +46,9 @@ class Profile extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void doLogout() {
+    Get.find<AuthCtl>().auth.signOut();
   }
 }
