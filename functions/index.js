@@ -524,12 +524,17 @@ exports.updateNote = functions.firestore
                   "lastUpdated": now,
                 });
           }
+          logger.debug(
+              "note onUpdate - updating embeddings",
+              context.params.noteId);
+          return exports.updateNoteEmbeddings(
+              titleChange,
+              commentChange,
+              snippetChange,
+              context.params.noteId);
+        } else {
+          return [];
         }
-        return exports.updateNoteEmbeddings(
-            titleChange,
-            commentChange,
-            snippetChange,
-            context.params.noteId);
       } catch (error) {
         logger.error("note onUpdate - error", error);
         return [];
