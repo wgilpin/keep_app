@@ -11,14 +11,17 @@ class Profile extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('rKyv'),
+        title: const Text('Doofer'),
       ),
       body: Center(
         child: Column(
           children: [
-            const Text(
-              'Profile Page',
-              style: TextStyle(fontSize: 24),
+            const Padding(
+              padding: EdgeInsets.only(top: 20.0),
+              child: Text(
+                'Profile Page',
+                style: TextStyle(fontSize: 24),
+              ),
             ),
             ElevatedButton(onPressed: doLogout, child: const Text('Logout')),
           ],

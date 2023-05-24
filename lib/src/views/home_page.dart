@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('rKyv'),
+        title: const Text('Doofer'),
         actions: <Widget>[
           Container(
             // Add padding around the search bar

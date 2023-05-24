@@ -92,7 +92,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     Get.changeTheme(makeTheme());
     return GetMaterialApp(
-      title: 'rKyv',
+      title: 'Doofer',
       initialBinding: AppBindings(),
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),

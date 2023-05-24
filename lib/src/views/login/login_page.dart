@@ -65,7 +65,7 @@ class LoginPage extends GetWidget<AuthCtl> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text(
-                      "Login in to rKyv",
+                      "Login in to Doofer",
                       style: const TextStyle(fontSize: 24),
                     ),
                     addVerticalSpace(40),

@@ -44,7 +44,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "rKyv",
+          "Doofer",
           style: TextStyle(fontSize: 24),
         ),
         actions: <Widget>[
