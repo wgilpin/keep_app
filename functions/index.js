@@ -463,7 +463,17 @@ exports.createNote = functions.firestore
  */
 exports.deleteNote = functions.firestore
     .document("notes/{noteId}")
-    .onDelete((_, context) => {
+    .onDelete((snap, context) => {
+      // record the update time to the user record
+      const now = Timestamp.fromDate(new Date());
+      getFirestore()
+          .collection("users")
+          .doc(snap.data().user.id)
+          .update({
+            "lastUpdated": now,
+          });
+
+      // delete the note embeddings
       return getFirestore()
           .collection("embeddings")
           .doc(context.params.noteId)

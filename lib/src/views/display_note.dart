@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/src/controllers/firestore_db.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/note_card.dart';
@@ -91,12 +93,26 @@ class _DisplayNoteState extends State<DisplayNote> {
           width: 1200,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
-            child: NoteCard(
-              widget._note,
-              null,
-              onPinned: doPinnedChange,
-              showTitle: true,
-              showHtml: true,
+            child: Column(
+              children: [
+                NoteCard(
+                  widget._note,
+                  null,
+                  onPinned: doPinnedChange,
+                  showTitle: true,
+                  showHtml: true,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          showAlertDialog(context);
+                        },
+                        icon: const Icon(Icons.delete))
+                  ],
+                )
+              ],
             ),
           ),
         ),
@@ -153,7 +169,7 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   onCardTapped(noteId) async {
-    print("displayNote.onCardTapped");
+    debugPrint("displayNote.onCardTapped");
     widget._note = await getNote(noteId);
     setState(() {
       relatedNotes = getRelatedNotes();
@@ -186,5 +202,39 @@ class _DisplayNoteState extends State<DisplayNote> {
               )),
             )
           ];
+  }
+
+  void doDelete() {
+    debugPrint("DisplayNote.doDelete");
+    FirebaseFirestore.instance.collection('notes').doc(widget._note.id!).delete();
+    Get.back();
+  }
+
+  void showAlertDialog(BuildContext context) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: const Text("Cancel"),
+      onPressed: () => Get.back(),
+    );
+    Widget continueButton = TextButton(
+      onPressed: doDelete,
+      child: const Text("Delete"),
+    );
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: const Text("Are you sure?"),
+      content: const Text("Deleting notes can't be undone?"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 }
