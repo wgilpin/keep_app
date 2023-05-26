@@ -57,3 +57,4 @@ chromeext/prod/*.zip
 chromeext/build/local/
 chromeext/build/prod/
 node_modules/
+package-lock.json

@@ -3,24 +3,22 @@
 /* eslint-disable require-jsdoc */
 const index = require("../index.js");
 
-// index.doTextSearch(
-//     "ukraine",
-//     10,
-//     "zdt3YB86kJaxsESbMmkblkqQ3093")
-//     .then((res) => {
-//       console.log(res);
-//     });
+index
+    .doTextSearch("ukraine", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
+    .then((res) => {
+      console.log(res);
+    });
 
-async function noteSearch() {
-  index.doNoteSearch(
-      "FgtHXS1200uAsLUyTjHx",
-      10,
-      "zdt3YB86kJaxsESbMmkblkqQ3093")
-      .then((res) => {
-        console.log(res);
-      });
-}
-noteSearch();
+// async function noteSearch() {
+//   index.doNoteSearch(
+//       "FgtHXS1200uAsLUyTjHx",
+//       10,
+//       "zdt3YB86kJaxsESbMmkblkqQ3093")
+//       .then((res) => {
+//         console.log(res);
+//       });
+// }
+// noteSearch();
 
 // const {getFirestore, Timestamp} = require("firebase-admin/firestore");
 
@@ -44,5 +42,3 @@ noteSearch();
 // }
 
 // setTimes();
-
-

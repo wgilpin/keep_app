@@ -1,6 +1,8 @@
 {
   "devDependencies": {
-    "mustache": "^4.2.0"
+    "eslint": "^8.41.0",
+    "mustache": "^4.2.0",
+    "prettier": "^2.8.8"
   },
   "scripts": {
     "build-ext:local": "sh ./chromeext/build-local.sh",

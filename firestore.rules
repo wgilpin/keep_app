@@ -18,6 +18,7 @@ service cloud.firestore {
 
     function isNoteOwner(){
       // the note user field matches the logged in user
-      return existingData().user == /databases/$(database)/documents/users/$(request.auth.uid)
+      return existingData().user == /databases/$(database)/documents/users/$(request.auth.uid);
     }
   }
+}
