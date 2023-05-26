@@ -16,6 +16,8 @@ const {Configuration, OpenAIApi} = require("openai");
 const similarity = require( "compute-cosine-similarity" );
 const {stripHtml} = require("string-strip-html");
 
+const THRESHOLD = 0.75;
+
 initializeApp();
 // const auth = getAuth(app);
 
@@ -255,7 +257,7 @@ function cacheRelated(rankedNotes, related, originalId, userId) {
   * @return {Array<{id, title}>} ids of most similar notes sorted by similarity
   */
 async function vecSimilarRanked(
-    searchVecs, notes, originalId, userId, count = 10, threshold = 0.7) {
+    searchVecs, notes, originalId, userId, count = 10, threshold = THRESHOLD) {
   const promises = [];
   for (const n of notes.docs) {
     if (n.id != originalId) {
