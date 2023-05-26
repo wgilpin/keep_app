@@ -66,7 +66,7 @@ class NoteCard extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 8, right: 0, top: 8, bottom: 8),
                         child: Text(
                           _note.title ?? "Untitled",
-                          style: const TextStyle(fontSize: 24),
+                          style: const TextStyle(fontSize: 24, fontFamily: "RobotoSlab"),
                         ),
                       ),
                     ),

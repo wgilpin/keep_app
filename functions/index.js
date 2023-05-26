@@ -395,7 +395,7 @@ exports.doTextSearch = async function(searchText, maxResults, uid) {
       note.comment.toLowerCase().includes(searchTextLower) ||
       note.snippet.toLowerCase().includes(searchTextLower)
     ) {
-      results.add(snap.id);
+      results.add({id: snap.id, title: note.title});
     }
   }
 
