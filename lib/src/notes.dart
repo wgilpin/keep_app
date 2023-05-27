@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class Note {
   String? id;
@@ -9,18 +10,29 @@ class Note {
   bool isPinned = false;
   DocumentReference? user;
   DateTime? created;
+  List<Map<String, String>>? related;
+  Timestamp? relatedUpdated;
 
   Note();
 
   Note.fromSnapshot(snapshot) {
-    id = snapshot.id;
-    title = snapshot.data()['title'];
-    comment = snapshot.data()['comment'];
-    snippet = snapshot.data()['snippet'];
-    url = snapshot.data()['url'];
-    isPinned = snapshot.data()['isPinned'] ?? false;
-    if (snapshot.data()['created'] != null) {
-      created = snapshot.data()['created'].toDate();
+    try {
+      id = snapshot.id;
+      title = snapshot.data()['title'];
+      comment = snapshot.data()['comment'];
+      snippet = snapshot.data()['snippet'];
+      url = snapshot.data()['url'];
+      isPinned = snapshot.data()['isPinned'] ?? false;
+      created = snapshot.data()['created']?.toDate();
+      if (snapshot.data()['related'] != null) {
+        related = [];
+        for (var item in snapshot.data()['related']) {
+          related!.add({"id": item["id"], "title": item['title']});
+        }
+      }
+      relatedUpdated = snapshot.data()['relatedUpdated'];
+    } on Exception catch (e) {
+      debugPrint('Failed to create note from snapshot: $e');
     }
   }
 

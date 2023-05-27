@@ -3,42 +3,31 @@
 /* eslint-disable require-jsdoc */
 const index = require("../index.js");
 
-index
-    .doTextSearch("ukraine", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
-    .then((res) => {
-      console.log(res);
-    });
+// index
+//     .doTextSearch("ukraine", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
+//     .then((res) => {
+//       console.log(res);
+//     });
 
-// async function noteSearch() {
-//   index.doNoteSearch(
-//       "FgtHXS1200uAsLUyTjHx",
-//       10,
-//       "zdt3YB86kJaxsESbMmkblkqQ3093")
-//       .then((res) => {
-//         console.log(res);
-//       });
-// }
-// noteSearch();
+async function noteSearch() {
+  index
+      .doNoteSearch("EskGBMtnoSUXFOrqI4dV", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
+      .then((res) => {
+        console.log(res);
+      });
+}
+noteSearch();
 
 // const {getFirestore, Timestamp} = require("firebase-admin/firestore");
 
-// async function setTimes() {
+// async function deleteRelated() {
 //   const db = getFirestore();
 //   const notes = await db.collection("notes").get();
-//   const now = Timestamp.fromDate(new Date());
 //   for (const n of notes.docs) {
-//     if (n.data().created != null) {
-//       db.
-//           collection("notes").
-//           doc(n.id).
-//           update({"updatedAt": n.data().created});
-//     } else {
-//       db.
-//           collection("notes").
-//           doc(n.id).
-//           update({"updatedAt": now});
-//     }
+//     db.collection("notes")
+//         .doc(n.id)
+//         .update({related: null, relatedUpdated: Timestamp.fromMillis(0)});
 //   }
 // }
 
-// setTimes();
+// deleteRelated();

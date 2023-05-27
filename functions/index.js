@@ -63,15 +63,16 @@ async function getOpenaiKey() {
  * @return {Promise<Array<number>>} the embedding
  **/
 async function getCachedTextSearch(text) {
+  const findText = text.trim().toLowerCase();
   const res = await getFirestore()
       .collection("embeddings_cache")
-      .doc(text.trim())
+      .doc(findText)
       .get();
   if (res.exists) {
     // update the timestamp for the FIFO cache
     getFirestore()
         .collection("embeddings_cache")
-        .doc(text.trim())
+        .doc(findText)
         .update({timestamp: Timestamp.fromDate(new Date())}, {merge: true});
     return res.data().embedding;
   } else {
@@ -100,7 +101,7 @@ async function cacheTextEmbedding(text, embedding) {
           snapshot.docs[0].ref.delete();
         });
   }
-  cache.doc(text.trim()).set({
+  cache.doc(text.trim().toLowerCase()).set({
     embedding: embedding,
     timestamp: Timestamp.fromDate(new Date()),
   });
@@ -293,6 +294,7 @@ function getNoteSimilarity(noteVecs, searchVecs) {
 function cacheRelated(rankedNotes, related, originalId, userId) {
   const now = Timestamp.fromDate(new Date());
 
+  logger.debug("cacheRelated", originalId);
   // update the related notes for the original note
   getFirestore().collection("notes").doc(originalId).set(
       {
@@ -301,12 +303,6 @@ function cacheRelated(rankedNotes, related, originalId, userId) {
       },
       {merge: true},
   );
-
-  // update the lastUpdated timestamp for the user
-  getFirestore()
-      .collection("users")
-      .doc(userId)
-      .set({lastUpdated: now}, {merge: true});
 }
 
 /**
@@ -432,9 +428,15 @@ exports.textSearch = onCall(async (req) => {
  * @param {string} noteId - ID of the note to compare
  * @param {number} maxResults - The maximum number of results.
  * @param {string} uid - The user id.
+ * @param {number} threshold - The minimum similarity score to return.
  * @return {Array<object>} the most similar notes sorted by similarity
  */
-exports.doNoteSearch = async function(noteId, maxResults, uid) {
+exports.doNoteSearch = async function(
+    noteId,
+    maxResults,
+    uid,
+    threshold = THRESHOLD,
+) {
   // get the note
   const note = await getFirestore().collection("notes").doc(noteId).get();
   const {title, comment, snippet} = note.data();
@@ -444,11 +446,17 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
     // does the original note have a valid related cache?
     if (note.data().related) {
       const user = await getFirestore().collection("users").doc(uid).get();
-      if (user.data().lastUpdated >= note.data().relatedUpdated) {
+      if (user.data().lastUpdated < note.data().relatedUpdated) {
+        logger.debug("noteSearch - using cache", {
+          uid,
+          lastUpdated: user.data().lastUpdated,
+          relatedUpdated: note.data().relatedUpdated,
+        });
         return note.data().related;
       }
     }
 
+    logger.debug("noteSearch - getting related");
     // we didn't find a valid cache, so search for related notes
     const notes = await getMyNotes(uid);
 
@@ -467,6 +475,7 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
         noteId,
         note.data().user.id,
         maxResults,
+        threshold,
     );
     return searchResults;
   } else {
@@ -483,10 +492,10 @@ exports.doNoteSearch = async function(noteId, maxResults, uid) {
  * @return {Array<{id, title}>} the most similar notes sorted by similarity
  */
 exports.noteSearch = onCall(async (req) => {
-  const {noteId, maxResults} = req.data;
+  const {noteId, maxResults, threshold} = req.data;
   const uid = req.auth.uid;
 
-  return exports.doNoteSearch(noteId, maxResults, uid);
+  return exports.doNoteSearch(noteId, maxResults, uid, threshold);
 });
 
 /**
@@ -589,6 +598,11 @@ exports.updateNote = functions.firestore
                   return false;
                 });
 
+            logger.debug("note onUpdate - updating user lastUpdated", {
+              titleChange,
+              commentChange,
+              snippetChange,
+            });
             // record the update time to the user record
             getFirestore().collection("users").doc(newValue.user.id).update({
               lastUpdated: now,
