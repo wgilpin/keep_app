@@ -6,6 +6,9 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow read, write: if isNoteOwner();
       }
+      match /users/{userId}{
+      	allow read, write: if userId == request.auth.uid;
+      }
     }
 
     function isSignedIn() {
