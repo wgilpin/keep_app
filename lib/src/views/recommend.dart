@@ -37,7 +37,8 @@ class Recommender {
       final uid = Get.find<AuthCtl>().user!.uid;
       final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final lastUpdated = (userSnap.data()!['lastUpdated'] ?? 0) as Timestamp;
-      final relatedUpdated = (note.relatedUpdated ?? 0) as Timestamp;
+      final relatedUpdated =
+          note.relatedUpdated == null ? Timestamp.fromMicrosecondsSinceEpoch(0) : note.relatedUpdated as Timestamp;
       if (note.related != null && note.related!.isNotEmpty) {
         if (lastUpdated.compareTo(relatedUpdated) <= 0.0) {
           debugPrint('noteSearch cached: U: ${lastUpdated.toDate()} N:${relatedUpdated.toDate()}');
@@ -48,7 +49,7 @@ class Recommender {
 
       final functions = FirebaseFunctions.instance;
       final callable = functions.httpsCallable('noteSearch');
-      final data = {"noteId": note.id, "maxResults": count, "threshold": 0.85};
+      final data = {"noteId": note.id, "maxResults": count};
       final results = await callable.call(data);
       if (results.data == null) {
         return [];
