@@ -110,13 +110,14 @@ async function cacheTextEmbedding(text, embedding) {
 /**
  * get the embedding from openai
  * @param {string} text the text to embed
- * @param {string} model the model to use
+ * @param {boolean} useCache whether to use the cache
  * @return {Promise<Array<number>>} the embedding
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
-async function getTextEmbedding(text, model = "text-embedding-ada-002") {
+async function getTextEmbedding(text, useCache) {
+  const model = "text-embedding-ada-002";
   // check if the text has already been cached
-  const embeddings = await getCachedTextSearch(text);
+  const embeddings = useCache ? await getCachedTextSearch(text) : null;
   if (embeddings == null) {
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY || (await getOpenaiKey()),
@@ -130,18 +131,21 @@ async function getTextEmbedding(text, model = "text-embedding-ada-002") {
       model,
     };
     const emb = await openai.createEmbedding(embConfig);
-    try {
-      const res = emb.data.data[0]["embedding"];
-      // cache the embedding
-      cacheTextEmbedding(text, res);
-      return res;
-    } catch (error) {
-      logger.error("error getting embedding", error);
-      return [];
+    const openAIres = emb.data.data[0]["embedding"];
+    if (useCache) {
+      try {
+        // cache the embedding
+        cacheTextEmbedding(text, openAIres);
+        return openAIres;
+      } catch (error) {
+        logger.error("error getting embedding", error);
+        return [];
+      }
+    } else {
+      return openAIres;
     }
-  } else {
-    return embeddings;
   }
+  return embeddings;
 }
 
 /**
@@ -167,7 +171,7 @@ async function getMyNotes(uid) {
  * @return {Array<String>} ids of most similar notes sorted by similarity
  */
 async function getSimilarToText(text, notes, uid, count = 10) {
-  const textVector = await getTextEmbedding(text);
+  const textVector = await getTextEmbedding(text, true);
   const similarNoteIds = await vecSimilarRanked(
       [textVector],
       notes,
@@ -201,20 +205,38 @@ function cleanSnippet(text) {
 
 /**
  * get the 3 embeddings for a note title, snippet, comment
- * @param {string} noteId the note id
- * @return {Array<Array<number>>} the embeddings
+ * @param {string} noteSnapshot the note
+ * @param {string} uid the user id
+ * @return {Map<String, Array<number>>} the embeddings
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
-async function getNoteEmbeddings(noteId) {
+exports.getNoteEmbeddings = async (noteSnapshot, uid) => {
   const embSnap = await getFirestore()
       .collection("embeddings")
-      .doc(noteId)
+      .doc(noteSnapshot.id)
       .get();
-  const titleVector = embSnap.data().titleVector;
-  const snippetVector = embSnap.data().snippetVector;
-  const commentVector = embSnap.data().commentVector;
-  return [titleVector, snippetVector, commentVector];
-}
+  let titleVector;
+  let commentVector;
+  let snippetVector;
+  if (embSnap.exists) {
+    titleVector = embSnap.data().titleVector;
+    snippetVector = embSnap.data().snippetVector;
+    commentVector = embSnap.data().commentVector;
+  } else {
+    const {title, snippet, comment} = noteSnapshot.data();
+    const vecs = await this.updateNoteEmbeddings(
+        title,
+        comment,
+        snippet,
+        noteSnapshot.id,
+        uid,
+    );
+    [titleVector, snippetVector, commentVector] = vecs;
+  }
+  const dict = {};
+  dict[noteSnapshot.id] = [titleVector, snippetVector, commentVector];
+  return dict;
+};
 
 /**
  * get the 3 embeddings for a note title, snippet, comment
@@ -223,6 +245,7 @@ async function getNoteEmbeddings(noteId) {
  * @param {string} snippet the note snippet
  * @param {string} noteId the note id
  * @param {string} uid the user id
+ * @return {Array<Array<number>>} the embeddings
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
 
@@ -234,24 +257,30 @@ exports.updateNoteEmbeddings = async (title, comment, snippet, noteId, uid) => {
   const updates = {};
 
   if (title) {
-    updates["titleVector"] = await getTextEmbedding(title);
+    updates["titleVector"] = await getTextEmbedding(title, false);
   }
 
   if (snippet) {
     const clean = cleanSnippet(snippet);
-    updates["snippetVector"] = await getTextEmbedding(clean);
+    updates["snippetVector"] = await getTextEmbedding(clean, false);
   }
 
   if (comment) {
-    updates["commentVector"] = await getTextEmbedding(comment);
+    updates["commentVector"] = await getTextEmbedding(comment, false);
   }
 
   logger.debug("updateNoteEmbeddings", noteId);
   // write any updates to the db
-  return getFirestore()
+  await getFirestore()
       .collection("embeddings")
       .doc(noteId)
       .set(updates, {merge: true});
+
+  return [
+    updates["titleVector"],
+    updates["snippetVector"],
+    updates["commentVector"],
+  ];
 };
 
 /**
@@ -327,19 +356,24 @@ async function vecSimilarRanked(
   const promises = [];
   for (const n of notes.docs) {
     if (n.id != originalId) {
-      promises.push(getNoteEmbeddings(n.id));
+      promises.push(exports.getNoteEmbeddings(n, userId));
     }
   }
-  const vecs = await Promise.all(promises);
-
+  const vecMaps = await Promise.all(promises);
+  // make a single dict of all the embeddings
+  const vecs = {};
+  for (const vecMap of vecMaps) {
+    vecs[Object.keys(vecMap)[0]] = Object.values(vecMap)[0];
+  }
   // vecs is now 3 embeddings for each note
   // we have all the results, now calculate the similarity
   const similarityScores = {}; // id: score
-  for (let i = 0; i < vecs.length; i++) {
+  // eslint-disable-next-line guard-for-in
+  for (const id in vecs) {
     // for a note with embs 'noteVec', calculate the similarity
-    const score = getNoteSimilarity(vecs[i], searchVecs);
+    const score = getNoteSimilarity(vecs[id], searchVecs);
     if (score > threshold) {
-      similarityScores[notes.docs[i].id] = score;
+      similarityScores[id] = score;
     }
   }
   // Sort score scores in descending order
@@ -466,11 +500,11 @@ exports.doNoteSearch = async function(
     }
 
     // get embeddings for this note
-    const vector = await getNoteEmbeddings(note.id);
+    const vector = await exports.getNoteEmbeddings(note, uid);
 
     // get the most similar notes
     const searchResults = await vecSimilarRanked(
-        vector,
+        vector[noteId],
         notes,
         noteId,
         note.data().user.id,
@@ -527,12 +561,14 @@ exports.createNote = functions.firestore
           lastUpdated: now,
         });
 
-        return exports.updateNoteEmbeddings(
-            newValue.title,
-            newValue.comment,
-            newValue.snippet,
-            context.params.noteId,
-        );
+        exports
+            .updateNoteEmbeddings(
+                newValue.title,
+                newValue.comment,
+                newValue.snippet,
+                context.params.noteId,
+            )
+            .then((_) => "OK");
       } catch (error) {
         logger.error("note onCreated - error", error);
         return [];
@@ -612,12 +648,14 @@ exports.updateNote = functions.firestore
               "note onUpdate - updating embeddings",
               context.params.noteId,
           );
-          return exports.updateNoteEmbeddings(
-              titleChange,
-              commentChange,
-              snippetChange,
-              context.params.noteId,
-          );
+          exports
+              .updateNoteEmbeddings(
+                  titleChange,
+                  commentChange,
+                  snippetChange,
+                  context.params.noteId,
+              )
+              .then((_) => "OK");
         } else {
           return [];
         }
