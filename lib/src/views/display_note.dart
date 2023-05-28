@@ -121,45 +121,49 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   Widget columnView(AsyncSnapshot<Object> snapshot) {
-    return Column(
-      children: [
-        mainCard(),
-        Expanded(
-          child: Wrap(
-            children: snapshot.connectionState != ConnectionState.done
-                ? [
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 20.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  ]
-                : getRelatedColumn(snapshot.data as List<Map<String, String>>),
-          ),
+    return Expanded(
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            mainCard(),
+            Wrap(
+              children: snapshot.connectionState != ConnectionState.done
+                  ? [
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    ]
+                  : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget fullWidth(AsyncSnapshot<Object> snapshot) {
-    return Flex(direction: Axis.horizontal, children: [
-      Expanded(child: Align(alignment: Alignment.topCenter, child: mainCard())),
-      Column(
-        children: snapshot.connectionState != ConnectionState.done
-            ? [
-                const SizedBox(
-                  width: 324,
-                  child: Center(
-                      child: Padding(
-                    padding: EdgeInsets.only(top: 20.0),
-                    child: CircularProgressIndicator(),
-                  )),
-                )
-              ]
-            : getRelatedColumn(snapshot.data as List<Map<String, String>>),
-      ),
-    ]);
+    return SingleChildScrollView(
+      child: Flex(direction: Axis.horizontal, children: [
+        Expanded(child: Align(alignment: Alignment.topCenter, child: mainCard())),
+        Column(
+          children: snapshot.connectionState != ConnectionState.done
+              ? [
+                  const SizedBox(
+                    width: 324,
+                    child: Center(
+                        child: Padding(
+                      padding: EdgeInsets.only(top: 20.0),
+                      child: CircularProgressIndicator(),
+                    )),
+                  )
+                ]
+              : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+        ),
+      ]),
+    );
   }
 
   Future<List<Map<String, String>>> getRelatedNotes() async {
