@@ -11,6 +11,7 @@
             "args": [
                 "--dart-define", "EMULATOR=false",
                 "--web-port", "52233",
+                "--web-renderer", "html",
             ],
         },
         {

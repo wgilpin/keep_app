@@ -50,6 +50,7 @@ class NoteCard extends StatelessWidget {
       child: Card(
         color: Colors.yellow[200],
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Flex(
               direction: Axis.horizontal,
@@ -83,7 +84,12 @@ class NoteCard extends StatelessWidget {
                 onTapped?.call();
               },
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_note.url != null && _note.url!.startsWith("https://www.youtube.com"))
+                    Container(
+                        decoration: const BoxDecoration(color: Colors.black),
+                        child: Center(child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth))),
                   if (_note.comment != null && _note.comment!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -146,5 +152,11 @@ class NoteCard extends StatelessWidget {
   doPinned() {
     debugPrint("doPinned ${_note.id}, ${!_note.isPinned}");
     onPinned?.call(_note.id!, !_note.isPinned);
+  }
+
+  String getYtThumbnail(String? url) {
+    final uri = Uri.parse(url!);
+    final videoId = uri.queryParameters["v"];
+    return "https://img.youtube.com/vi/$videoId/sddefault.jpg";
   }
 }
