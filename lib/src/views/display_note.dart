@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:keep_app/src/controllers/firestore_db.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/note_card.dart';
@@ -13,7 +12,7 @@ class DisplayNote extends StatefulWidget {
   DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _note = note;
 
   Note _note;
-  final Function? onChanged;
+  final Function()? onChanged;
   final Function(String, bool)? onPinned;
 
   @override
@@ -101,6 +100,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                   onPinned: doPinnedChange,
                   showTitle: true,
                   showChecked: true,
+                  onChanged: doChanged,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -240,5 +240,11 @@ class _DisplayNoteState extends State<DisplayNote> {
         return alert;
       },
     );
+  }
+
+  void doChanged() {
+    debugPrint('DisplayNote.doChanged');
+
+    widget.onChanged?.call();
   }
 }

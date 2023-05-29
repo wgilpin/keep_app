@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   void doChanged() {
     print("Homepage.changed");
     _notesStream = NoteController.getData();
+    setState(() {});
   }
 
   onPinnedNote(String noteId, bool value) async {
@@ -149,6 +150,8 @@ class _HomePageState extends State<HomePage> {
     return StreamBuilder<QuerySnapshot>(
         stream: _notesStream,
         builder: (context, snapshot) {
+          debugPrint('Homepage streambuilder rebuild');
+
           debugPrint("Homepage.build ${snapshot.connectionState}");
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

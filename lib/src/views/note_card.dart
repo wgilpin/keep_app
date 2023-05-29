@@ -41,10 +41,17 @@ class NoteCard extends StatelessWidget {
   final Function? onTapped;
   final Function(String, bool)? onPinned;
   final Function(int, bool)? onCheck;
+  final Function()? onChanged;
   late bool showChecked = false;
 
   NoteCard(this._note, this._maxlines,
-      {this.onTapped, this.onPinned, this.onCheck, this.showTitle = true, required this.showChecked, super.key});
+      {this.onTapped,
+      this.onPinned,
+      this.onCheck,
+      this.onChanged,
+      this.showTitle = true,
+      required this.showChecked,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +95,7 @@ class NoteCard extends StatelessWidget {
               },
               child: _note.checklist.isEmpty
                   ? CardText(_note, _maxlines ?? 4)
-                  : CheckList(note: _note, showChecked: showChecked),
+                  : CheckList(note: _note, showChecked: showChecked, onChanged: doChange),
             ),
             if (_note.url != null)
               Padding(
@@ -130,6 +137,11 @@ class NoteCard extends StatelessWidget {
   }
 
   cardTextWidget(Note note, int? maxlines) {}
+
+  void doChange() {
+    debugPrint('noteCard doChange');
+    onChanged?.call();
+  }
 }
 
 class CardText extends StatelessWidget {

@@ -4,7 +4,8 @@ import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/utils/layout.dart';
 
 class CheckList extends StatefulWidget {
-  const CheckList({super.key, required this.note, required this.showChecked});
+  const CheckList({super.key, this.onChanged, required this.note, required this.showChecked});
+  final Function()? onChanged;
   final Note note;
   final bool showChecked;
 
@@ -46,19 +47,19 @@ class _CheckListState extends State<CheckList> {
           Padding(
               padding: const EdgeInsets.only(left: 8.0, right: 8.0),
               child: Column(children: [
-                getChecklist(unchecked),
+                getChecklist(unchecked, 'unch'),
                 if (widget.showChecked)
                   const Divider(
                     height: 8,
                     thickness: 2,
                   ),
-                if (widget.showChecked) getChecklist(checked),
+                if (widget.showChecked) getChecklist(checked, 'ch'),
               ])),
       ],
     );
   }
 
-  getChecklist(list) {
+  getChecklist(list, keyPrefix) {
     return ReorderableListView.builder(
       onReorder: (oldIndex, newIndex) => {
         setState(() {
@@ -77,10 +78,10 @@ class _CheckListState extends State<CheckList> {
         return CheckboxListTile(
           dense: true,
           visualDensity: VisualDensity.compact,
-          key: item.key,
+          key: Key("$keyPrefix-${item.key.toString()}"),
           title: Text(item.title ?? ""),
           value: item.checked,
-          onChanged: (newValue) {
+          onChanged: (newValue) async {
             debugPrint("checklist onChanged $newValue");
             setState(() {
               item.checked = newValue!;
@@ -92,7 +93,7 @@ class _CheckListState extends State<CheckList> {
                 unchecked.add(item);
               }
             });
-            saveChecklist();
+            await saveChecklist();
           },
           controlAffinity: ListTileControlAffinity.leading, //  <-- leading Checkbox
         );
@@ -100,11 +101,14 @@ class _CheckListState extends State<CheckList> {
     );
   }
 
-  void saveChecklist() {
+  saveChecklist() async {
     widget.note.checklist = unchecked + checked;
-    FirebaseFirestore.instance
+    return FirebaseFirestore.instance
         .collection('notes')
         .doc(widget.note.id)
-        .update({"checklist": widget.note.checklist.map((e) => e.toJson()).toList()});
+        .update({"checklist": widget.note.checklist.map((e) => e.toJson()).toList()}).then((value) {
+      debugPrint('checklist on change');
+      widget.onChanged?.call();
+    });
   }
 }

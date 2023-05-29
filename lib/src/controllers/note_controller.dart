@@ -9,6 +9,8 @@ class NoteController {
 
   static Stream<QuerySnapshot> getData() {
     try {
+      debugPrint('========== NoteController.getData');
+
       final db = FirebaseFirestore.instance;
       String uid = authCtl.user!.uid;
       if (uid.isNotEmpty) {

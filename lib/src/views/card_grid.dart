@@ -18,7 +18,7 @@ class CardGrid extends StatelessWidget {
     debugPrint("CardGrid.onNoteTapped");
     Get.to(DisplayNote(
       note,
-      onChanged: onUpdate,
+      onChanged: doUpdate,
       onPinned: onPinned,
     ));
   }
@@ -46,11 +46,17 @@ class CardGrid extends StatelessWidget {
               onTapped: () => onNoteTapped(_notes[index]),
               onPinned: onPinned,
               showChecked: false,
+              onChanged: doChange,
             ),
           );
         },
       ),
     );
+  }
+
+  void doChange() {
+    debugPrint('CardGrid.doChange');
+    onUpdate?.call();
   }
 
   void sortNotesByPinned() {
@@ -66,5 +72,10 @@ class CardGrid extends StatelessWidget {
     _notes.clear();
     _notes.addAll(pinned);
     _notes.addAll(unPinned);
+  }
+
+  doUpdate() {
+    debugPrint('CardGrid.doUpdate');
+    onUpdate?.call();
   }
 }
