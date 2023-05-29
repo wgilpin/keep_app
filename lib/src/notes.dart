@@ -11,6 +11,7 @@ class Note {
   DocumentReference? user;
   DateTime? created;
   List<Map<String, String>>? related;
+  List<CheckItem> checklist = [];
   Timestamp? relatedUpdated;
 
   Note();
@@ -28,6 +29,12 @@ class Note {
         related = [];
         for (var item in snapshot.data()['related']) {
           related!.add({"id": item["id"], "title": item['title']});
+        }
+      }
+      if (snapshot.data()['checklist'] != null) {
+        checklist = [];
+        for (var item in snapshot.data()['checklist']) {
+          checklist.add(CheckItem(item["index"], item['title'], item['checked'], item["key"]));
         }
       }
       relatedUpdated = snapshot.data()['relatedUpdated'];
@@ -55,6 +62,30 @@ class Note {
       if (user != null) "user": user,
       if (created != null) "created": created,
       "isPinned": isPinned,
+    };
+  }
+}
+
+class CheckItem {
+  int? index;
+  Key? key;
+  String? title;
+  bool checked = false;
+
+  CheckItem(this.index, this.title, this.checked, String key) {
+    if (key.isNotEmpty) {
+      this.key = Key(key);
+    } else {
+      this.key = UniqueKey();
+    }
+  }
+
+  toJson() {
+    return {
+      "index": index,
+      "title": title,
+      "checked": checked,
+      "key": key.toString(),
     };
   }
 }

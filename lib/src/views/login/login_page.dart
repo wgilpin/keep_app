@@ -53,7 +53,7 @@ class LoginPage extends GetWidget<AuthCtl> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('rKyv'),
+          title: const Text('Doofer'),
           automaticallyImplyLeading: false,
         ),
         body: Center(

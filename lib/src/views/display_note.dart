@@ -100,7 +100,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                   null,
                   onPinned: doPinnedChange,
                   showTitle: true,
-                  showHtml: true,
+                  showChecked: true,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

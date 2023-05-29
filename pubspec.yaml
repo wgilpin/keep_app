@@ -48,6 +48,7 @@ dependencies:
       url: https://github.com/Thogsit/receive_sharing_intent
   flutter_launcher_icons: ^0.13.1
   google_fonts: ^4.0.5
+  html: ^0.15.3
 
 dev_dependencies:
   flutter_test:

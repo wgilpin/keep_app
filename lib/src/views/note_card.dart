@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/utils/layout.dart';
+import 'package:keep_app/src/views/checklist.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SmallNoteCard extends StatelessWidget {
@@ -36,12 +38,13 @@ class NoteCard extends StatelessWidget {
   final int? _maxlines;
   final Note _note;
   final bool showTitle;
-  final bool showHtml;
   final Function? onTapped;
   final Function(String, bool)? onPinned;
+  final Function(int, bool)? onCheck;
+  late bool showChecked = false;
 
-  const NoteCard(this._note, this._maxlines,
-      {this.onTapped, this.onPinned, this.showTitle = true, this.showHtml = false, super.key});
+  NoteCard(this._note, this._maxlines,
+      {this.onTapped, this.onPinned, this.onCheck, this.showTitle = true, required this.showChecked, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -83,42 +86,9 @@ class NoteCard extends StatelessWidget {
                 debugPrint("NoteCard.onTap");
                 onTapped?.call();
               },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_note.url != null && _note.url!.startsWith("https://www.youtube.com"))
-                    Container(
-                        decoration: const BoxDecoration(color: Colors.black),
-                        child: Center(child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth))),
-                  if (_note.comment != null && _note.comment!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        // maxLines: _maxlines,
-                        overflow: TextOverflow.ellipsis,
-                        _note.comment ?? "",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  if ((!showHtml) & (_note.snippet != null))
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        maxLines: _maxlines,
-                        overflow: TextOverflow.ellipsis,
-                        _note.snippet ?? "",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  if ((showHtml) & (_note.snippet ?? "").isNotEmpty)
-                    Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          decoration: BoxDecoration(color: Colors.yellow[100]),
-                          child: Html(data: _note.snippet ?? ""),
-                        )),
-                ],
-              ),
+              child: _note.checklist.isEmpty
+                  ? CardText(_note, _maxlines ?? 4)
+                  : CheckList(note: _note, showChecked: showChecked),
             ),
             if (_note.url != null)
               Padding(
@@ -154,9 +124,49 @@ class NoteCard extends StatelessWidget {
     onPinned?.call(_note.id!, !_note.isPinned);
   }
 
-  String getYtThumbnail(String? url) {
-    final uri = Uri.parse(url!);
-    final videoId = uri.queryParameters["v"];
-    return "https://img.youtube.com/vi/$videoId/sddefault.jpg";
+  doCheck(int itemId, bool newState) {
+    debugPrint("doCheck $itemId, $newState");
+    onCheck?.call(itemId, newState);
+  }
+
+  cardTextWidget(Note note, int? maxlines) {}
+}
+
+class CardText extends StatelessWidget {
+  final Note _note;
+  final int _maxLines;
+  const CardText(Note note, int maxLines, {super.key})
+      : _note = note,
+        _maxLines = maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_note.url != null && _note.url!.startsWith("https://www.youtube.com"))
+          Container(
+              decoration: const BoxDecoration(color: Colors.black),
+              child: Center(child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth))),
+        if (_note.comment != null && _note.comment!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              // maxLines: _maxlines,
+              overflow: TextOverflow.ellipsis,
+              _note.comment ?? "",
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        // if (_note.checklist.isNotEmpty) CheckList(note: _note),
+        if ((_note.snippet ?? "").isNotEmpty)
+          Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(color: Colors.yellow[100]),
+                child: Html(data: _note.snippet ?? ""),
+              )),
+      ],
+    );
   }
 }
