@@ -72,8 +72,8 @@ class CheckItem {
   String? title;
   bool checked = false;
 
-  CheckItem(this.index, this.title, this.checked, String key) {
-    if (key.isNotEmpty) {
+  CheckItem(this.index, this.title, this.checked, String? key) {
+    if (key != null && key.isNotEmpty) {
       this.key = Key(key);
     } else {
       this.key = UniqueKey();

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/utils/layout.dart';
 
@@ -14,14 +15,21 @@ class CheckList extends StatefulWidget {
 }
 
 class _CheckListState extends State<CheckList> {
-  late List<CheckItem> unchecked;
-  late List<CheckItem> checked;
+  late List<CheckItem> _unchecked;
+  late List<CheckItem> _checked;
+  late TextEditingController _itemTitleCtl;
+  CheckItem? _editingItem;
 
   @override
   void initState() {
     super.initState();
-    unchecked = widget.note.checklist.where((element) => !element.checked).toList();
-    checked = widget.note.checklist.where((element) => element.checked).toList();
+    splitChecklist();
+    _itemTitleCtl = TextEditingController(text: "");
+  }
+
+  void splitChecklist() {
+    _unchecked = widget.note.checklist.where((element) => !element.checked).toList();
+    _checked = widget.note.checklist.where((element) => element.checked).toList();
   }
 
   @override
@@ -47,19 +55,20 @@ class _CheckListState extends State<CheckList> {
           Padding(
               padding: const EdgeInsets.only(left: 8.0, right: 8.0),
               child: Column(children: [
-                getChecklist(unchecked, 'unch'),
+                getChecklist(_unchecked, widget.showChecked),
+                if (widget.showChecked) showEditBox(),
                 if (widget.showChecked)
                   const Divider(
                     height: 8,
                     thickness: 2,
                   ),
-                if (widget.showChecked) getChecklist(checked, 'ch'),
+                if (widget.showChecked) getChecklist(_checked, true),
               ])),
       ],
     );
   }
 
-  getChecklist(list, keyPrefix) {
+  getChecklist(list, bool showChecked) {
     return ReorderableListView.builder(
       onReorder: (oldIndex, newIndex) => {
         setState(() {
@@ -75,34 +84,36 @@ class _CheckListState extends State<CheckList> {
       itemCount: list.length,
       itemBuilder: (context, index) {
         final item = list[index];
-        return CheckboxListTile(
-          dense: true,
-          visualDensity: VisualDensity.compact,
-          key: Key("$keyPrefix-${item.key.toString()}"),
-          title: Text(item.title ?? ""),
+        return LabeledCheckbox(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+          key: item.key,
+          title: item.title ?? "",
           value: item.checked,
+          onEdit: onEdit,
+          onDelete: showChecked ? deleteItem : null,
           onChanged: (newValue) async {
-            debugPrint("checklist onChanged $newValue");
-            setState(() {
-              item.checked = newValue!;
-              if (newValue) {
-                checked.add(item);
-                unchecked.remove(item);
-              } else {
-                checked.remove(item);
-                unchecked.add(item);
-              }
-            });
-            await saveChecklist();
+            if (widget.showChecked) {
+              debugPrint("checklist onChanged $newValue");
+              setState(() {
+                item.checked = newValue!;
+                if (newValue) {
+                  _checked.add(item);
+                  _unchecked.remove(item);
+                } else {
+                  _checked.remove(item);
+                  _unchecked.add(item);
+                }
+              });
+              await saveChecklist();
+            }
           },
-          controlAffinity: ListTileControlAffinity.leading, //  <-- leading Checkbox
         );
       },
     );
   }
 
   saveChecklist() async {
-    widget.note.checklist = unchecked + checked;
+    widget.note.checklist = _unchecked + _checked;
     return FirebaseFirestore.instance
         .collection('notes')
         .doc(widget.note.id)
@@ -110,5 +121,139 @@ class _CheckListState extends State<CheckList> {
       debugPrint('checklist on change');
       widget.onChanged?.call();
     });
+  }
+
+  onEdit(Key? key) {
+    // get the item for this key
+    debugPrint("onEdit $key");
+    CheckItem item = widget.note.checklist.firstWhere((element) => element.key == key);
+    _itemTitleCtl.text = item.title ?? "";
+    _editingItem = item;
+  }
+
+  showEditBox() {
+    return Row(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: TextField(
+              controller: _itemTitleCtl,
+              decoration: InputDecoration(
+                labelText: 'Add or edit an item',
+                labelStyle: const TextStyle(fontStyle: FontStyle.italic),
+                fillColor: Colors.yellow[200],
+              ),
+              onSubmitted: (_) => doPressed(),
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.save),
+          onPressed: doPressed,
+        ),
+      ],
+    );
+  }
+
+  void doPressed() {
+    debugPrint("onSubmitted");
+    setState(() {
+      if (_editingItem != null) {
+        // editing an existing item
+        // get the index of the item
+        int index = widget.note.checklist.indexWhere((element) => element.key == _editingItem!.key);
+        widget.note.checklist[index].title = _itemTitleCtl.text;
+      } else {
+        // adding a new item
+        _unchecked.add(CheckItem(_unchecked.length, _itemTitleCtl.text, false, null));
+      }
+      _itemTitleCtl.text = "";
+
+      saveChecklist();
+    });
+  }
+
+  deleteItem(Key? key) {
+    // delete the item for this key
+    debugPrint("deleteItem $key");
+    CheckItem item = widget.note.checklist.firstWhere((element) => element.key == key);
+    setState(() {
+      widget.note.checklist.remove(item);
+      _itemTitleCtl.text = "";
+    });
+    splitChecklist();
+    saveChecklist().then(() => widget.onChanged?.call());
+  }
+}
+
+class LabeledCheckbox extends StatefulWidget {
+  const LabeledCheckbox({
+    super.key,
+    required this.title,
+    required this.padding,
+    required this.value,
+    required this.onChanged,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final String title;
+  final EdgeInsets padding;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Function(Key)? onEdit;
+  final Function(Key)? onDelete;
+
+  @override
+  State<LabeledCheckbox> createState() => _LabeledCheckboxState();
+}
+
+class _LabeledCheckboxState extends State<LabeledCheckbox> {
+  bool hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        InkWell(
+          onTap: () {
+            widget.onChanged(!widget.value);
+          },
+          child: Padding(
+            padding: widget.padding,
+            child: Checkbox(
+              value: widget.value,
+              onChanged: (bool? newValue) {
+                widget.onChanged(newValue!);
+              },
+            ),
+          ),
+        ),
+        Expanded(
+            child: InkWell(
+          onTap: () => widget.onEdit?.call(widget.key!),
+          child: Row(
+            children: [
+              Expanded(child: Text(widget.title)),
+              if (hover && widget.onDelete != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 24.0),
+                  child: IconButton(onPressed: doDelete, icon: const Icon(Icons.close)),
+                )
+            ],
+          ),
+          onHover: (value) => setState(() {
+            hover = value;
+          }),
+        )),
+      ],
+    );
+  }
+
+  void doDelete() {
+    debugPrint('doDelete in LabeledCheckbox');
+
+    widget.onDelete?.call(widget.key!);
   }
 }
