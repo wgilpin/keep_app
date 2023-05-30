@@ -34,7 +34,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     setState(() {
       widget._note.isPinned = state;
     });
-    widget.onPinned?.call(widget._note!.id!, state);
+    widget.onPinned?.call(widget._note.id!, state);
   }
 
   @override
@@ -46,31 +46,6 @@ class _DisplayNoteState extends State<DisplayNote> {
           "Doofer",
           style: TextStyle(fontSize: 24),
         ),
-        actions: <Widget>[
-          IconButton(
-            color: Colors.brown[600],
-            onPressed: () {
-              Get.to(EditNoteForm(widget._note))?.then(
-                (updatedNoteID) async {
-                  if (updatedNoteID != null) {
-                    // note has been updated, reload it
-                    final note = await getNote(updatedNoteID);
-                    setState(
-                      () {
-                        widget._note = note;
-                      },
-                    );
-                    // if the parent widget supplied a callback, call it
-                    print("DisplayNote.onPressed");
-                    widget.onChanged?.call();
-                  }
-                },
-              );
-            },
-            icon: const Icon(Icons.edit),
-            iconSize: 36,
-          ),
-        ],
       ),
       body: FutureBuilder<Object>(
           future: relatedNotes,
@@ -83,71 +58,88 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   Widget mainCard() {
-    return Wrap(
-      children: [
-        Container(
-          constraints: const BoxConstraints(
-            maxWidth: 1000,
-          ),
-          width: 1200,
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              children: [
-                NoteCard(
-                  widget._note,
-                  null,
-                  onPinned: doPinnedChange,
-                  showTitle: true,
-                  showChecked: true,
-                  onChanged: doChanged,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          showAlertDialog(context);
-                        },
-                        icon: const Icon(Icons.delete))
-                  ],
-                )
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget columnView(AsyncSnapshot<Object> snapshot) {
-    return Expanded(
-      child: SingleChildScrollView(
+    return Container(
+      constraints: const BoxConstraints(
+        maxWidth: 1000,
+      ),
+      width: 1200,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            mainCard(),
-            Wrap(
-              children: snapshot.connectionState != ConnectionState.done
-                  ? [
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 20.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    ]
-                  : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+            NoteCard(
+              widget._note,
+              null,
+              onPinned: doPinnedChange,
+              showTitle: true,
+              showChecked: true,
+              onChanged: doChanged,
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: doEditCard,
+                  icon: const Icon(Icons.edit),
+                ),
+                IconButton(
+                    onPressed: () {
+                      deleteAfterConfirm(context);
+                    },
+                    icon: const Icon(Icons.delete))
+              ],
+            )
           ],
         ),
       ),
     );
   }
 
+  void doEditCard() {
+    Get.to(EditNoteForm(widget._note))?.then(
+      (updatedNoteID) async {
+        if (updatedNoteID != null) {
+          // note has been updated, reload it
+          final note = await getNote(updatedNoteID);
+          setState(
+            () {
+              widget._note = note;
+            },
+          );
+          // if the parent widget supplied a callback, call it
+          print("DisplayNote.onPressed");
+          widget.onChanged?.call();
+        }
+      },
+    );
+  }
+
+  Widget columnView(AsyncSnapshot<Object> snapshot) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          mainCard(),
+          Wrap(
+            children: snapshot.connectionState != ConnectionState.done
+                ? [
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  ]
+                : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget fullWidth(AsyncSnapshot<Object> snapshot) {
     return SingleChildScrollView(
-      child: Flex(direction: Axis.horizontal, children: [
-        Expanded(child: Align(alignment: Alignment.topCenter, child: mainCard())),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Container(alignment: Alignment.topCenter, child: mainCard())),
         Column(
           children: snapshot.connectionState != ConnectionState.done
               ? [
@@ -214,7 +206,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     Get.back();
   }
 
-  void showAlertDialog(BuildContext context) {
+  void deleteAfterConfirm(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
       child: const Text("Cancel"),

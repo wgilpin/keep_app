@@ -94,7 +94,7 @@ class NoteCard extends StatelessWidget {
                 onTapped?.call();
               },
               child: _note.checklist.isEmpty
-                  ? CardText(_note, _maxlines ?? 4)
+                  ? CardText(_note, showChecked)
                   : CheckList(note: _note, showChecked: showChecked, onChanged: doChange),
             ),
             if (_note.url != null)
@@ -116,16 +116,6 @@ class NoteCard extends StatelessWidget {
     );
   }
 
-  Future<void> doLaunchUrl(url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(
-      uri,
-      mode: LaunchMode.platformDefault,
-    )) {
-      Get.snackbar("Could not launch site", url);
-    }
-  }
-
   doPinned() {
     debugPrint("doPinned ${_note.id}, ${!_note.isPinned}");
     onPinned?.call(_note.id!, !_note.isPinned);
@@ -144,12 +134,22 @@ class NoteCard extends StatelessWidget {
   }
 }
 
+Future<void> doLaunchUrl(url) async {
+  final uri = Uri.parse(url);
+  if (!await launchUrl(
+    uri,
+    mode: LaunchMode.externalNonBrowserApplication,
+  )) {
+    Get.snackbar("Could not launch site", url);
+  }
+}
+
 class CardText extends StatelessWidget {
   final Note _note;
-  final int _maxLines;
-  const CardText(Note note, int maxLines, {super.key})
+  final bool _canOpenVideo;
+  const CardText(Note note, bool canOpenVideo, {super.key})
       : _note = note,
-        _maxLines = maxLines;
+        _canOpenVideo = canOpenVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +159,18 @@ class CardText extends StatelessWidget {
         if (_note.url != null && _note.url!.startsWith("https://www.youtube.com"))
           Container(
               decoration: const BoxDecoration(color: Colors.black),
-              child: Center(child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth))),
+              child: Center(
+                  child: Column(
+                children: [
+                  // for the large card view, clciking the thumbnail will open the video
+                  if (_canOpenVideo)
+                    InkWell(
+                        onTap: () => doLaunchUrl(_note.url),
+                        child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth)),
+                  // for the small card view, clciking the thumbnail will open the card not the video
+                  if (!_canOpenVideo) Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth),
+                ],
+              ))),
         if (_note.comment != null && _note.comment!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),
