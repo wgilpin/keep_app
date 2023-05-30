@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/utils/layout.dart';
 
@@ -20,11 +19,21 @@ class _CheckListState extends State<CheckList> {
   late TextEditingController _itemTitleCtl;
   CheckItem? _editingItem;
 
+  late FocusNode inputFocusNode;
+
   @override
   void initState() {
     super.initState();
     splitChecklist();
     _itemTitleCtl = TextEditingController(text: "");
+    inputFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _itemTitleCtl.dispose();
+    inputFocusNode.dispose();
+    super.dispose();
   }
 
   void splitChecklist() {
@@ -138,10 +147,10 @@ class _CheckListState extends State<CheckList> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: TextField(
+              focusNode: inputFocusNode,
               controller: _itemTitleCtl,
               decoration: InputDecoration(
                 labelText: 'Add or edit an item',
-                labelStyle: const TextStyle(fontStyle: FontStyle.italic),
                 fillColor: Colors.yellow[200],
               ),
               onSubmitted: (_) => doPressed(),
@@ -171,6 +180,7 @@ class _CheckListState extends State<CheckList> {
       _itemTitleCtl.text = "";
 
       saveChecklist();
+      inputFocusNode.requestFocus();
     });
   }
 
