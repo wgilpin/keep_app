@@ -72,7 +72,7 @@ class _DisplayNoteState extends State<DisplayNote> {
           children: [
             NoteCard(
               widget._note,
-              null,
+              onTapped: null,
               onPinned: doPinnedChange,
               showTitle: true,
               showChecked: true,

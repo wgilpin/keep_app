@@ -42,7 +42,6 @@ class CardGrid extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: NoteCard(
               _notes[index],
-              20,
               onTapped: () => onNoteTapped(_notes[index]),
               onPinned: onPinned,
               showChecked: false,

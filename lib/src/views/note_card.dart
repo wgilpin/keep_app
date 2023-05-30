@@ -29,7 +29,9 @@ class SmallNoteCard extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 title,
-                style: const TextStyle(fontSize: 18),
+                style: GoogleFonts.robotoSlab(
+                  fontSize: 18,
+                ),
               ),
             ),
           )),
@@ -37,8 +39,7 @@ class SmallNoteCard extends StatelessWidget {
   }
 }
 
-class NoteCard extends StatelessWidget {
-  final int? _maxlines;
+class NoteCard extends StatefulWidget {
   final Note _note;
   final bool showTitle;
   final Function? onTapped;
@@ -47,7 +48,7 @@ class NoteCard extends StatelessWidget {
   final Function()? onChanged;
   late bool showChecked = false;
 
-  NoteCard(this._note, this._maxlines,
+  NoteCard(this._note,
       {this.onTapped,
       this.onPinned,
       this.onCheck,
@@ -55,6 +56,19 @@ class NoteCard extends StatelessWidget {
       this.showTitle = true,
       required this.showChecked,
       super.key});
+
+  @override
+  State<NoteCard> createState() => _NoteCardState();
+}
+
+class _NoteCardState extends State<NoteCard> {
+  bool showPin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    showPin = widget._note.isPinned;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,18 +85,19 @@ class NoteCard extends StatelessWidget {
               direction: Axis.horizontal,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_note.title != null)
+                if (widget._note.title != null)
                   Expanded(
                     child: InkWell(
                       hoverColor: Colors.transparent,
+                      onHover: (value) => setState(() => showPin = (value || widget._note.isPinned)),
                       onTap: () {
                         debugPrint("NoteCard.onTap");
-                        onTapped?.call();
+                        widget.onTapped?.call();
                       },
                       child: Padding(
                         padding: const EdgeInsets.only(left: 8, right: 0, top: 8, bottom: 8),
                         child: Text(
-                          _note.title ?? "Untitled",
+                          widget._note.title ?? "Untitled",
                           style: GoogleFonts.robotoSlab(
                             fontSize: 24,
                           ),
@@ -90,9 +105,16 @@ class NoteCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                IconButton(
-                  onPressed: () => doPinned(),
-                  icon: Icon(_note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                InkWell(
+                  onTap: () {},
+                  onHover: (value) => setState(() => showPin = value),
+                  hoverColor: Colors.transparent,
+                  child: IconButton(
+                    onPressed: () => doPinned(),
+                    icon: Icon(
+                        color: showPin ? Colors.brown[900] : Colors.transparent,
+                        widget._note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                  ),
                 )
               ],
             ),
@@ -100,22 +122,22 @@ class NoteCard extends StatelessWidget {
               hoverColor: Colors.transparent,
               onTap: () {
                 debugPrint("NoteCard.onTap");
-                onTapped?.call();
+                widget.onTapped?.call();
               },
-              child: _note.checklist.isEmpty
-                  ? CardText(_note, showChecked)
-                  : CheckList(note: _note, showChecked: showChecked, onChanged: doChange),
+              child: widget._note.checklist.isEmpty
+                  ? CardText(widget._note, widget.showChecked)
+                  : CheckList(note: widget._note, showChecked: widget.showChecked, onChanged: doChange),
             ),
-            if (_note.url != null)
+            if (widget._note.url != null)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
                   hoverColor: Colors.transparent,
-                  onTap: () => doLaunchUrl(_note.url),
+                  onTap: () => doLaunchUrl(widget._note.url),
                   child: Text(
                     // maxLines: _maxlines,
                     overflow: TextOverflow.ellipsis,
-                    _note.url ?? "",
+                    widget._note.url ?? "",
                     style: TextStyle(fontSize: 16, color: Colors.blue[900], decoration: TextDecoration.underline),
                   ),
                 ),
@@ -127,20 +149,20 @@ class NoteCard extends StatelessWidget {
   }
 
   doPinned() {
-    debugPrint("doPinned ${_note.id}, ${!_note.isPinned}");
-    onPinned?.call(_note.id!, !_note.isPinned);
+    debugPrint("doPinned ${widget._note.id}, ${!widget._note.isPinned}");
+    widget.onPinned?.call(widget._note.id!, !widget._note.isPinned);
   }
 
   doCheck(int itemId, bool newState) {
     debugPrint("doCheck $itemId, $newState");
-    onCheck?.call(itemId, newState);
+    widget.onCheck?.call(itemId, newState);
   }
 
   cardTextWidget(Note note, int? maxlines) {}
 
   void doChange() {
     debugPrint('noteCard doChange');
-    onChanged?.call();
+    widget.onChanged?.call();
   }
 }
 
