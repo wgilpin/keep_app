@@ -18,6 +18,8 @@ class SmallNoteCard extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 300, minHeight: 100),
       child: Card(
+          elevation: 10,
+          shadowColor: Colors.black,
           color: Colors.yellow[200],
           child: InkWell(
             onTap: () {
@@ -59,6 +61,8 @@ class NoteCard extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 1200, minHeight: 100),
       child: Card(
+        elevation: 10,
+        shadowColor: Colors.black,
         color: Colors.yellow[200],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
