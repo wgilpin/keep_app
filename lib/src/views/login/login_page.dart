@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../utils/layout.dart';
@@ -53,7 +54,12 @@ class LoginPage extends GetWidget<AuthCtl> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Doofer'),
+          title: Text(
+            'Doofer',
+            style: GoogleFonts.philosopher(
+              fontSize: 30,
+            ),
+          ),
           automaticallyImplyLeading: false,
         ),
         body: Center(

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/note_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/card_grid.dart';
@@ -51,7 +52,12 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Doofer'),
+        title: Text(
+          'Doofer',
+          style: GoogleFonts.philosopher(
+            fontSize: 30,
+          ),
+        ),
         actions: <Widget>[
           Container(
             // Add padding around the search bar

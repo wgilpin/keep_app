@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
@@ -11,7 +12,12 @@ class Profile extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Doofer'),
+        title: Text(
+          'Doofer',
+          style: GoogleFonts.philosopher(
+            fontSize: 30,
+          ),
+        ),
       ),
       body: Center(
         child: Column(

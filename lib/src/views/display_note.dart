@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/note_card.dart';
@@ -42,9 +43,11 @@ class _DisplayNoteState extends State<DisplayNote> {
     MediaQueryData media = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Doofer",
-          style: TextStyle(fontSize: 24),
+        title: Text(
+          'Doofer',
+          style: GoogleFonts.philosopher(
+            fontSize: 30,
+          ),
         ),
       ),
       body: FutureBuilder<Object>(
