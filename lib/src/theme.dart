@@ -23,6 +23,7 @@ ThemeData makeTheme() {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
+        labelStyle: TextStyle(color: Colors.brown[300], fontStyle: FontStyle.italic),
         fillColor: Colors.yellow[200],
       ),
       textSelectionTheme: TextSelectionThemeData(

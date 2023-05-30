@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/utils/layout.dart';
 import 'package:keep_app/src/views/checklist.dart';
@@ -77,7 +78,9 @@ class NoteCard extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 8, right: 0, top: 8, bottom: 8),
                         child: Text(
                           _note.title ?? "Untitled",
-                          style: const TextStyle(fontSize: 24, fontFamily: "RobotoSlab"),
+                          style: GoogleFonts.robotoSlab(
+                            fontSize: 24,
+                          ),
                         ),
                       ),
                     ),
