@@ -74,6 +74,7 @@ class NoteCard extends StatelessWidget {
                 if (_note.title != null)
                   Expanded(
                     child: InkWell(
+                      hoverColor: Colors.transparent,
                       onTap: () {
                         debugPrint("NoteCard.onTap");
                         onTapped?.call();
@@ -96,6 +97,7 @@ class NoteCard extends StatelessWidget {
               ],
             ),
             InkWell(
+              hoverColor: Colors.transparent,
               onTap: () {
                 debugPrint("NoteCard.onTap");
                 onTapped?.call();
@@ -108,6 +110,7 @@ class NoteCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
+                  hoverColor: Colors.transparent,
                   onTap: () => doLaunchUrl(_note.url),
                   child: Text(
                     // maxLines: _maxlines,
@@ -172,6 +175,7 @@ class CardText extends StatelessWidget {
                   // for the large card view, clciking the thumbnail will open the video
                   if (_canOpenVideo)
                     InkWell(
+                        hoverColor: Colors.transparent,
                         onTap: () => doLaunchUrl(_note.url),
                         child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth)),
                   // for the small card view, clciking the thumbnail will open the card not the video
