@@ -61,10 +61,11 @@ class _HomePageState extends State<HomePage> {
         actions: <Widget>[
           Container(
             // Add padding around the search bar
-            padding: const EdgeInsets.all(6.0),
-            constraints: const BoxConstraints(maxWidth: 270),
+            padding: const EdgeInsets.only(top: 6.0, right: 6.0, bottom: 6.0, left: 6.0),
+            constraints: const BoxConstraints(maxWidth: 240),
             // Use a Material design search bar
             child: TextField(
+              textAlignVertical: TextAlignVertical.bottom,
               onSubmitted: (_) {
                 doSearch(context);
               },
@@ -72,6 +73,7 @@ class _HomePageState extends State<HomePage> {
               decoration: InputDecoration(
                 hintText: 'Search...',
                 // Add a clear button to the search bar
+                suffixIconColor: Colors.brown,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
@@ -80,6 +82,7 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
                 // Add a search icon or button to the search bar
+                prefixIconColor: Colors.brown,
                 prefixIcon: IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
