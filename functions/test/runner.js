@@ -3,11 +3,9 @@
 /* eslint-disable require-jsdoc */
 const index = require("../index.js");
 
-index
-    .doTextSearch("ukraine", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
-    .then((res) => {
-      console.log(res);
-    });
+index.doTextSearch("vector", 10, "zdt3YB86kJaxsESbMmkblkqQ3093").then((res) => {
+  console.log(res);
+});
 
 async function noteSearch() {
   index

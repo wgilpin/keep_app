@@ -406,11 +406,11 @@ async function vecSimilarRanked(
  * @param {string} searchText the text to search for
  * @param {number} maxResults the maximum number of results to return
  * @param {string} uid the user id
- * @return {Array<QuerySnapshot>} the most similar notes sorted by similarity
+ * @return {dict<string, string>} the most similar notes sorted by similarity
  */
 exports.doTextSearch = async function(searchText, maxResults, uid) {
   const notes = await getMyNotes(uid);
-  const results = new Set();
+  const results = {};
 
   if (notes.length == 0) {
     logger.debug("textSearch - no notes", uid);
@@ -425,11 +425,11 @@ exports.doTextSearch = async function(searchText, maxResults, uid) {
       note.comment.toLowerCase().includes(searchTextLower) ||
       note.snippet.toLowerCase().includes(searchTextLower)
     ) {
-      results.add({id: snap.id, title: note.title});
+      results[snap.id] = note.title;
     }
   }
 
-  if (results.size < maxResults) {
+  if (Object.keys(results).length < maxResults) {
     const searchResults = await getSimilarToText(
         searchText,
         notes,
@@ -437,12 +437,12 @@ exports.doTextSearch = async function(searchText, maxResults, uid) {
         maxResults - results.size,
     );
     for (const r of searchResults) {
-      results.add(r);
+      // only add if the key not already in the set
+      results[r.id] = r.title;
     }
   }
 
-  const retValue = Array.from(results);
-  return retValue;
+  return results;
 };
 
 /** FUNCTION: search for text in the notes
