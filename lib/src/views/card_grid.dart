@@ -44,7 +44,7 @@ class CardGrid extends StatelessWidget {
               _notes[index],
               onTapped: () => onNoteTapped(_notes[index]),
               onPinned: onPinned,
-              showChecked: false,
+              interactable: false,
               onChanged: doChange,
             ),
           );

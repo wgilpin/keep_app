@@ -74,8 +74,7 @@ class _DisplayNoteState extends State<DisplayNote> {
               widget._note,
               onTapped: null,
               onPinned: doPinnedChange,
-              showTitle: true,
-              showChecked: true,
+              interactable: true,
               onChanged: doChanged,
             ),
             Row(

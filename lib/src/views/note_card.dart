@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
@@ -40,22 +41,16 @@ class SmallNoteCard extends StatelessWidget {
 }
 
 class NoteCard extends StatefulWidget {
-  final Note _note;
-  final bool showTitle;
-  final Function? onTapped;
-  final Function(String, bool)? onPinned;
-  final Function(int, bool)? onCheck;
-  final Function()? onChanged;
-  late bool showChecked = false;
+  final Note _note; // the note to display
+  final Function? onTapped; // called when the card is tapped
+  final Function(String, bool)? onPinned; // called when the pinned state changes
+  final Function(int, bool)? onCheck; // called when a checklist item is checked
+  final Function()? onChanged; // called when the note is changed
+  late final bool
+      interactable; // respond to taps on checklist or image - set to true for full view, false for grid view
 
   NoteCard(this._note,
-      {this.onTapped,
-      this.onPinned,
-      this.onCheck,
-      this.onChanged,
-      this.showTitle = true,
-      required this.showChecked,
-      super.key});
+      {this.onTapped, this.onPinned, this.onCheck, this.onChanged, required this.interactable, super.key});
 
   @override
   State<NoteCard> createState() => _NoteCardState();
@@ -63,6 +58,7 @@ class NoteCard extends StatefulWidget {
 
 class _NoteCardState extends State<NoteCard> {
   bool showPin = false;
+  final platform = defaultTargetPlatform;
 
   @override
   void initState() {
@@ -89,7 +85,7 @@ class _NoteCardState extends State<NoteCard> {
                   Expanded(
                     child: InkWell(
                       hoverColor: Colors.transparent,
-                      onHover: (value) => setState(() => showPin = (value || widget._note.isPinned)),
+                      onHover: (value) => setState(() => showPin = shouldShowPin()),
                       onTap: () {
                         debugPrint("NoteCard.onTap");
                         widget.onTapped?.call();
@@ -112,7 +108,7 @@ class _NoteCardState extends State<NoteCard> {
                   child: IconButton(
                     onPressed: () => doPinned(),
                     icon: Icon(
-                        color: showPin ? Colors.brown[900] : Colors.transparent,
+                        color: shouldShowPin() ? Colors.brown[900] : Colors.transparent,
                         widget._note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
                   ),
                 )
@@ -125,8 +121,8 @@ class _NoteCardState extends State<NoteCard> {
                 widget.onTapped?.call();
               },
               child: widget._note.checklist.isEmpty
-                  ? CardText(widget._note, widget.showChecked)
-                  : CheckList(note: widget._note, showChecked: widget.showChecked, onChanged: doChange),
+                  ? CardText(widget._note, widget.interactable)
+                  : CheckList(note: widget._note, showChecked: widget.interactable, onChanged: doChange),
             ),
             if (widget._note.url != null)
               Padding(
@@ -148,24 +144,47 @@ class _NoteCardState extends State<NoteCard> {
     );
   }
 
+  // callback for when the pin is pressed
   doPinned() {
     debugPrint("doPinned ${widget._note.id}, ${!widget._note.isPinned}");
     widget.onPinned?.call(widget._note.id!, !widget._note.isPinned);
   }
 
+  // callback for when a checklist item is (un)checked
   doCheck(int itemId, bool newState) {
     debugPrint("doCheck $itemId, $newState");
     widget.onCheck?.call(itemId, newState);
   }
 
-  cardTextWidget(Note note, int? maxlines) {}
-
+  // callback for when the note changes
   void doChange() {
     debugPrint('noteCard doChange');
     widget.onChanged?.call();
   }
+
+  // work out if there is likely to be a mouse, as no mouse for onHover on mobile
+  bool shouldShowPin() {
+    // always show pin when pinned
+    if (widget._note.isPinned) return true;
+
+    // show when interactable, i.e. large view
+    if (widget.interactable) return true;
+
+    // if on mobile, show pins
+    if (platform == TargetPlatform.iOS || platform == TargetPlatform.android) return true;
+
+    // always show pins on apps as no mouse for onHover
+    if (!kIsWeb) return true;
+
+    // if on web a small screen width suggests mobile
+    double width = MediaQuery.of(context).size.width;
+    debugPrint('width $width');
+
+    return width < 450;
+  }
 }
 
+// open the note url, in the appropriate app
 Future<void> doLaunchUrl(url) async {
   final uri = Uri.parse(url);
   if (!await launchUrl(
