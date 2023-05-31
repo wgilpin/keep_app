@@ -95,7 +95,7 @@ class _NoteCardState extends State<NoteCard> {
                         child: Text(
                           widget._note.title ?? "Untitled",
                           style: GoogleFonts.robotoSlab(
-                            fontSize: 24,
+                            fontSize: 20,
                           ),
                         ),
                       ),
