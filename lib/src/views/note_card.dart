@@ -120,9 +120,15 @@ class _NoteCardState extends State<NoteCard> {
                 debugPrint("NoteCard.onTap");
                 widget.onTapped?.call();
               },
-              child: widget._note.checklist.isEmpty
-                  ? CardText(widget._note, widget.interactable)
-                  : CheckList(note: widget._note, showChecked: widget.interactable, onChanged: doChange),
+              child: Column(
+                children: [
+                  if (widget._note.url != null && widget._note.url!.startsWith("https://www.youtube.com"))
+                    heroImage(widget.interactable),
+                  if (widget._note.checklist.isNotEmpty)
+                    CheckList(note: widget._note, showChecked: widget.interactable, onChanged: doChange),
+                  CardText(widget._note, widget.interactable),
+                ],
+              ),
             ),
             if (widget._note.url != null)
               Padding(
@@ -182,6 +188,24 @@ class _NoteCardState extends State<NoteCard> {
 
     return width < 450;
   }
+
+  heroImage(canOpenVideo) {
+    return Container(
+        decoration: const BoxDecoration(color: Colors.black),
+        child: Center(
+            child: Column(
+          children: [
+            // for the large card view, clciking the thumbnail will open the video
+            if (canOpenVideo)
+              InkWell(
+                  hoverColor: Colors.transparent,
+                  onTap: () => doLaunchUrl(widget._note.url),
+                  child: Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth)),
+            // for the small card view, clciking the thumbnail will open the card not the video
+            if (!canOpenVideo) Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth),
+          ],
+        )));
+  }
 }
 
 // open the note url, in the appropriate app
@@ -207,22 +231,6 @@ class CardText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_note.url != null && _note.url!.startsWith("https://www.youtube.com"))
-          Container(
-              decoration: const BoxDecoration(color: Colors.black),
-              child: Center(
-                  child: Column(
-                children: [
-                  // for the large card view, clciking the thumbnail will open the video
-                  if (_canOpenVideo)
-                    InkWell(
-                        hoverColor: Colors.transparent,
-                        onTap: () => doLaunchUrl(_note.url),
-                        child: Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth)),
-                  // for the small card view, clciking the thumbnail will open the card not the video
-                  if (!_canOpenVideo) Image.network(getYtThumbnail(_note.url), fit: BoxFit.fitWidth),
-                ],
-              ))),
         if (_note.comment != null && _note.comment!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),

@@ -34,7 +34,8 @@ class Note {
       if (snapshot.data()['checklist'] != null) {
         checklist = [];
         for (var item in snapshot.data()['checklist']) {
-          checklist.add(CheckItem(item["index"], item['title'], item['checked'], item["key"]));
+          checklist
+              .add(CheckItem(index: item["index"], title: item['title'], checked: item['checked'], key: item["key"]));
         }
       }
       relatedUpdated = snapshot.data()['relatedUpdated'];
@@ -70,14 +71,18 @@ class CheckItem {
   int? index;
   Key? key;
   String? title;
-  bool checked = false;
+  bool checked;
 
-  CheckItem(this.index, this.title, this.checked, String? key) {
+  CheckItem({this.index, this.title, this.checked = false, String? key}) {
     if (key != null && key.isNotEmpty) {
       this.key = Key(key);
     } else {
       this.key = UniqueKey();
     }
+  }
+
+  CheckItem.fromTitle(this.title) : checked = false {
+    key = UniqueKey();
   }
 
   toJson() {

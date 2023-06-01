@@ -22,11 +22,14 @@ class DisplayNote extends StatefulWidget {
 
 class _DisplayNoteState extends State<DisplayNote> {
   late Future<List<Map<String, String>>> relatedNotes;
+  final _checkController = TextEditingController();
+  late bool hasChecklist;
 
   @override
   initState() {
     super.initState();
     relatedNotes = getRelatedNotes();
+    hasChecklist = widget._note.checklist.isNotEmpty;
   }
 
   void doPinnedChange(String id, bool state) {
@@ -80,6 +83,10 @@ class _DisplayNoteState extends State<DisplayNote> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                IconButton(
+                  onPressed: doAddCheck,
+                  icon: const Icon(Icons.add_box_outlined),
+                ),
                 IconButton(
                   onPressed: doEditCard,
                   icon: const Icon(Icons.edit),
@@ -240,5 +247,63 @@ class _DisplayNoteState extends State<DisplayNote> {
     debugPrint('DisplayNote.doChanged');
 
     widget.onChanged?.call();
+  }
+
+  void doAddCheck() {
+    SimpleDialog dialog = SimpleDialog(
+      elevation: 10,
+      shadowColor: Colors.black,
+      title: const Text("Add checklist item", style: TextStyle(fontSize: 18)),
+      backgroundColor: Colors.yellow[100],
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  autofocus: true,
+                  onSubmitted: (value) => saveNewItem(),
+                  controller: _checkController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'List item',
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.save),
+                onPressed: saveNewItem,
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return dialog;
+      },
+    );
+  }
+
+  void saveNewItem() {
+    if (_checkController.text.isNotEmpty) {
+      FirebaseFirestore.instance.collection("notes").doc(widget._note.id!).update({
+        "checklist": FieldValue.arrayUnion([
+          {"title": _checkController.text, "checked": false}
+        ])
+      }).then((value) {
+        setState(() {
+          CheckItem newItem = CheckItem.fromTitle(_checkController.text);
+          widget._note.checklist.add(newItem);
+          _checkController.clear();
+        });
+        doChanged();
+      });
+    }
+    // addCheckItem();
+    Get.back();
   }
 }

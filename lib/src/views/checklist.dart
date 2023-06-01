@@ -46,10 +46,6 @@ class _CheckListState extends State<CheckList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.note.url != null && widget.note.url!.startsWith("https://www.youtube.com"))
-          Container(
-              decoration: const BoxDecoration(color: Colors.black),
-              child: Center(child: Image.network(getYtThumbnail(widget.note.url), fit: BoxFit.fitWidth))),
         if (widget.note.comment != null && widget.note.comment!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -77,7 +73,7 @@ class _CheckListState extends State<CheckList> {
     );
   }
 
-  getChecklist(list, bool showChecked) {
+  getChecklist(List<CheckItem> list, bool showChecked) {
     return ReorderableListView.builder(
       onReorder: (oldIndex, newIndex) => {
         setState(() {
@@ -104,7 +100,7 @@ class _CheckListState extends State<CheckList> {
             if (widget.showChecked) {
               debugPrint("checklist onChanged $newValue");
               setState(() {
-                item.checked = newValue!;
+                item.checked = newValue;
                 if (newValue) {
                   _checked.add(item);
                   _unchecked.remove(item);
@@ -175,7 +171,7 @@ class _CheckListState extends State<CheckList> {
         widget.note.checklist[index].title = _itemTitleCtl.text;
       } else {
         // adding a new item
-        _unchecked.add(CheckItem(_unchecked.length, _itemTitleCtl.text, false, null));
+        _unchecked.add(CheckItem(index: _unchecked.length, title: _itemTitleCtl.text, checked: false));
       }
       _itemTitleCtl.text = "";
 
