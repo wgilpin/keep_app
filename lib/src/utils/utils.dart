@@ -7,3 +7,7 @@ String getYtThumbnail(String? url) {
   final videoId = uri.queryParameters["v"];
   return "https://img.youtube.com/vi/$videoId/sddefault.jpg";
 }
+
+String makeShareURL(String noteId) {
+  return "${Uri.base.origin}/#/share?id=$noteId";
+}

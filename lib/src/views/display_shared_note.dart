@@ -1,11 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
-import 'package:keep_app/src/utils/layout.dart';
+import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
 import 'package:keep_app/src/views/login/register_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
+import 'package:meta_seo/meta_seo.dart';
 
 class DisplaySharedNoted extends StatefulWidget {
   final String noteId;
@@ -53,6 +55,15 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
             return Center(child: Text("Error loading note ${snapshot.error}"));
           }
           if (snapshot.hasData) {
+            Note note = snapshot.data as Note;
+            // set meta tags for OG snippets
+            if (kIsWeb) {
+              MetaSEO metaSEO = MetaSEO();
+              metaSEO.ogTitle(ogTitle: "Doofer");
+              metaSEO.ogDescription(ogDescription: note.title ?? "A shared Note");
+              // TODO: the default image should be 300x300 for whatsapp
+              metaSEO.ogImage(ogImage: note.url ?? "https://doofer.app/assets/images/doofer.png");
+            }
             return SafeArea(
                 child: Align(
               alignment: Alignment.topCenter,
@@ -75,7 +86,7 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
                               style: TextStyle(decoration: TextDecoration.underline),
                             )),
                         addVerticalSpace(20),
-                        NoteCard(snapshot.data as Note, interactable: false),
+                        NoteCard(note, interactable: false),
                       ],
                     ),
                   )),
