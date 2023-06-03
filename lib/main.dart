@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:keep_app/pageNotFound.dart';
 import 'package:keep_app/src/views/display_shared_note.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:meta_seo/meta_seo.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,11 @@ Future<void> main() async {
     }
   } else {
     debugPrint('Using remote Firestore');
+  }
+
+  // set up meta tags for OG snippets
+  if (kIsWeb) {
+    MetaSEO().config();
   }
   runApp(const MyApp());
 }

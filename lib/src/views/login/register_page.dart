@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/auth_controller.dart';
-import '../../utils/layout.dart';
+import '../../utils/utils.dart';
 
 class RegisterPage extends GetWidget<AuthCtl> {
   final TextEditingController emailCtl = TextEditingController();

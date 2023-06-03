@@ -10,6 +10,8 @@ import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/note_card.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
+import '../utils/utils.dart';
+
 class DisplayNote extends StatefulWidget {
   DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _note = note;
 
@@ -338,7 +340,7 @@ class _DisplayNoteState extends State<DisplayNote> {
       });
       doChanged();
     });
-    String url = "${Uri.base.origin}/#/share?id=${widget._note.id}";
+    String url = makeShareURL(widget._note.id!);
     debugPrint('DisplayNote.doShare: $url');
     Clipboard.setData(ClipboardData(text: url));
     Get.snackbar("Note can be shared", "The link has been copied to the clipboard",

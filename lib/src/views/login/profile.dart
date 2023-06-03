@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
-import 'package:keep_app/src/utils/layout.dart';
+import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
 class Profile extends StatelessWidget {

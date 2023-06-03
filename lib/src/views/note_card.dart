@@ -4,7 +4,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
-import 'package:keep_app/src/utils/layout.dart';
+import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/checklist.dart';
 import 'package:url_launcher/url_launcher.dart';
 
