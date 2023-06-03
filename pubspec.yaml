@@ -49,6 +49,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   google_fonts: ^4.0.5
   html: ^0.15.3
+  meta_seo: ^3.0.5
 
 dev_dependencies:
   flutter_test:
