@@ -23,16 +23,16 @@ class AuthCtl extends GetxController {
   void onInit() {
     _firebaseUser = Rxn<User>(auth.currentUser);
     _firebaseUser.bindStream(auth.authStateChanges());
-    ever(_firebaseUser, _setInitialScreen);
+    // ever(_firebaseUser, _setInitialScreen);
     super.onInit();
   }
 
-  _setInitialScreen(User? user) {
-    if (user == null) {
-      //User Logged out
-      Get.to(LoginPage());
-    }
-  }
+  // _setInitialScreen(User? user) {
+  //   if (user == null) {
+  //     //User Logged out
+  //     Get.to(LoginPage());
+  //   }
+  // }
 
   /// Create a new user with email and password
   Future<void> createUser(String email, String password) async {

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
@@ -83,19 +84,39 @@ class _DisplayNoteState extends State<DisplayNote> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                IconButton(
-                  onPressed: doAddCheck,
-                  icon: const Icon(Icons.add_box_outlined),
+                Tooltip(
+                  message: 'Add a checklist item',
+                  child: IconButton(
+                    onPressed: doAddCheck,
+                    icon: const Icon(Icons.add_box_outlined),
+                  ),
                 ),
-                IconButton(
-                  onPressed: doEditCard,
-                  icon: const Icon(Icons.edit),
+                Tooltip(
+                  message: widget._note.isShared ? 'Stop sharingthis note' : 'Share this note',
+                  child: IconButton(
+                    onPressed: doShare,
+                    icon: Icon(Icons.share, color: widget._note.isShared ? Colors.red[900] : null),
+                  ),
                 ),
-                IconButton(
-                    onPressed: () {
-                      deleteAfterConfirm(context);
-                    },
-                    icon: const Icon(Icons.delete))
+                Tooltip(
+                  message: 'Edit this note',
+                  child: IconButton(
+                    onPressed: doEditCard,
+                    icon: const Icon(Icons.edit),
+                  ),
+                ),
+                Tooltip(
+                  message: 'Delete note',
+                  decoration: BoxDecoration(
+                    color: Colors.red[900],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: IconButton(
+                      onPressed: () {
+                        deleteAfterConfirm(context);
+                      },
+                      icon: const Icon(Icons.delete)),
+                )
               ],
             )
           ],
@@ -218,17 +239,19 @@ class _DisplayNoteState extends State<DisplayNote> {
   void deleteAfterConfirm(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
-      child: const Text("Cancel"),
+      child: const Text("Cancel", style: TextStyle(color: Colors.white)),
       onPressed: () => Get.back(),
     );
     Widget continueButton = TextButton(
       onPressed: doDelete,
-      child: const Text("Delete"),
+      child: const Text("Delete", style: TextStyle(color: Colors.white)),
     );
     // set up the AlertDialog
     AlertDialog alert = AlertDialog(
-      title: const Text("Are you sure?"),
-      content: const Text("Deleting notes can't be undone?"),
+      backgroundColor: Colors.red[900],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      title: const Text("Are you sure?", style: TextStyle(color: Colors.white)),
+      content: const Text("Deleting notes can't be undone?", style: TextStyle(color: Colors.white)),
       actions: [
         cancelButton,
         continueButton,
@@ -305,5 +328,20 @@ class _DisplayNoteState extends State<DisplayNote> {
     }
     // addCheckItem();
     Get.back();
+  }
+
+  void doShare() {
+    // set the shared flag on the note in firebase
+    FirebaseFirestore.instance.collection("notes").doc(widget._note.id!).update({"shared": true}).then((value) {
+      setState(() {
+        widget._note.isShared = true;
+      });
+      doChanged();
+    });
+    String url = "${Uri.base.origin}/#/share?id=${widget._note.id}";
+    debugPrint('DisplayNote.doShare: $url');
+    Clipboard.setData(ClipboardData(text: url));
+    Get.snackbar("Note can be shared", "The link has been copied to the clipboard",
+        snackPosition: SnackPosition.BOTTOM);
   }
 }

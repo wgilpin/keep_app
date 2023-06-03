@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../utils/layout.dart';
@@ -18,7 +19,12 @@ class RegisterPage extends GetWidget<AuthCtl> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Register'),
+          title: Text(
+            'Doofer',
+            style: GoogleFonts.philosopher(
+              fontSize: 30,
+            ),
+          ),
         ),
         body: Center(
           child: SizedBox(
@@ -28,6 +34,11 @@ class RegisterPage extends GetWidget<AuthCtl> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
+                    Text(
+                      "Create a Doofer account",
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    addVerticalSpace(40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Email'),
                       controller: emailCtl,

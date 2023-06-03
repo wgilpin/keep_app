@@ -4,8 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/pageNotFound.dart';
+import 'package:keep_app/src/views/display_shared_note.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'firebase_options.dart';
@@ -70,21 +73,23 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // For sharing or opening urls/text coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription = ReceiveSharingIntent.getTextStream().listen((String value) {
-      openEditPage(value);
-    }, onError: (err) {
-      debugPrint("getLinkStream error: $err");
-    });
+    if (!kIsWeb) {
+      _intentDataStreamSubscription = ReceiveSharingIntent.getTextStream().listen((String value) {
+        openEditPage(value);
+      }, onError: (err) {
+        debugPrint("getLinkStream error: $err");
+      });
 
-    // For sharing or opening urls/text coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialText().then((String? value) {
-      openEditPage(value);
-    });
+      // For sharing or opening urls/text coming from outside the app while the app is closed
+      ReceiveSharingIntent.getInitialText().then((String? value) {
+        openEditPage(value);
+      });
+    }
   }
 
   @override
   void dispose() {
-    _intentDataStreamSubscription.cancel();
+    if (!kIsWeb) _intentDataStreamSubscription.cancel();
     super.dispose();
   }
 
@@ -97,17 +102,21 @@ class _MyAppState extends State<MyApp> {
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),
       // static routes
-      routes: {
-        '/': (_) => const Root(),
-      },
+      routes: {},
       onGenerateRoute: generateRoute,
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(builder: (_) => const PageNotFound());
+      },
     );
   }
 
   var generateRoute = (RouteSettings settings) {
+    if (settings.name == '/') {
+      return MaterialPageRoute(builder: (_) => const Root());
+    }
     // iframe goes to edit form
     if (settings.name == '/iframe') {
-      return MaterialPageRoute(builder: (_) => const EditNoteForm(null)); // Pass it to BarPage.
+      return MaterialPageRoute(builder: (_) => const EditNoteForm(null));
     }
 
     // iframe with query params goes to edit form with query params as default values
@@ -123,6 +132,11 @@ class _MyAppState extends State<MyApp> {
                 comment: args["comment"],
                 url: args["url"],
               ));
+    }
+    if ((settings.name ?? "").startsWith('/share?')) {
+      // extract query params from URI
+      final args = Uri.parse(settings.name ?? "").queryParameters;
+      return MaterialPageRoute(builder: (_) => DisplaySharedNoted(args["id"] ?? ""));
     }
     return null; //
   };

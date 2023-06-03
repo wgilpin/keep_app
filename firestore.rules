@@ -4,7 +4,8 @@ service cloud.firestore {
     match /{document=**} {
       match /notes/{noteId}{
         allow create: if isSignedIn();
-        allow read, write: if isNoteOwner();
+        allow write: if isNoteOwner();
+        allow read: if isNoteOwner() || resource.data.get('shared', false);
       }
       match /users/{userId}{
       	allow read, write: if userId == request.auth.uid;

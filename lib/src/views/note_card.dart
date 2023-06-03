@@ -48,9 +48,16 @@ class NoteCard extends StatefulWidget {
   final Function()? onChanged; // called when the note is changed
   late final bool
       interactable; // respond to taps on checklist or image - set to true for full view, false for grid view
+  late final showPin; // show the pin icon - not shown on shared notes
 
   NoteCard(this._note,
-      {this.onTapped, this.onPinned, this.onCheck, this.onChanged, required this.interactable, super.key});
+      {this.onTapped,
+      this.onPinned,
+      this.onCheck,
+      this.onChanged,
+      required this.interactable,
+      this.showPin = true,
+      super.key});
 
   @override
   State<NoteCard> createState() => _NoteCardState();
@@ -170,6 +177,9 @@ class _NoteCardState extends State<NoteCard> {
 
   // work out if there is likely to be a mouse, as no mouse for onHover on mobile
   bool shouldShowPin() {
+    // if pin is turned off, eg shared note, always hidden
+    if (!widget.showPin) return false;
+
     // always show pin when pinned
     if (widget._note.isPinned) return true;
 
@@ -184,8 +194,6 @@ class _NoteCardState extends State<NoteCard> {
 
     // if on web a small screen width suggests mobile
     double width = MediaQuery.of(context).size.width;
-    debugPrint('width $width');
-
     return width < 450;
   }
 
@@ -201,7 +209,7 @@ class _NoteCardState extends State<NoteCard> {
                   hoverColor: Colors.transparent,
                   onTap: () => doLaunchUrl(widget._note.url),
                   child: Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth)),
-            // for the small card view, clciking the thumbnail will open the card not the video
+            // for the small card view, clicking the thumbnail will open the card not the video
             if (!canOpenVideo) Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth),
           ],
         )));
@@ -221,10 +229,7 @@ Future<void> doLaunchUrl(url) async {
 
 class CardText extends StatelessWidget {
   final Note _note;
-  final bool _canOpenVideo;
-  const CardText(Note note, bool canOpenVideo, {super.key})
-      : _note = note,
-        _canOpenVideo = canOpenVideo;
+  const CardText(Note note, bool canOpenVideo, {super.key}) : _note = note;
 
   @override
   Widget build(BuildContext context) {

@@ -12,6 +12,7 @@ class Note {
   DateTime? created;
   List<Map<String, String>>? related;
   List<CheckItem> checklist = [];
+  bool isShared = false;
   Timestamp? relatedUpdated;
 
   Note();
@@ -24,6 +25,7 @@ class Note {
       snippet = snapshot.data()['snippet'];
       url = snapshot.data()['url'];
       isPinned = snapshot.data()['isPinned'] ?? false;
+      isShared = snapshot.data()['shared'] ?? false;
       created = snapshot.data()['created']?.toDate();
       if (snapshot.data()['related'] != null) {
         related = [];
@@ -44,16 +46,6 @@ class Note {
     }
   }
 
-  Note.fromMap(mappedNote) {
-    id = mappedNote.id;
-    title = mappedNote['title'];
-    comment = mappedNote['comment'];
-    snippet = mappedNote['snippet'];
-    url = mappedNote['url'];
-    isPinned = mappedNote['isPinned'];
-    created = mappedNote['created']?.toDate();
-  }
-
   Map<String, dynamic> toFirestore() {
     return {
       if (title != null) "name": title,
@@ -62,6 +54,7 @@ class Note {
       if (url != null) "url": url,
       if (user != null) "user": user,
       if (created != null) "created": created,
+      'shared': isShared,
       "isPinned": isPinned,
     };
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/utils/layout.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
 class Profile extends StatelessWidget {
@@ -22,6 +23,7 @@ class Profile extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
+            addVerticalSpace(40),
             const Padding(
               padding: EdgeInsets.only(top: 20.0),
               child: Text(
@@ -29,6 +31,7 @@ class Profile extends StatelessWidget {
                 style: TextStyle(fontSize: 24),
               ),
             ),
+            addVerticalSpace(30),
             ElevatedButton(onPressed: doLogout, child: const Text('Logout')),
           ],
         ),

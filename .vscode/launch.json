@@ -27,6 +27,17 @@
             "flutterMode": "release"
         },
         {
+          "name": "keep_app (share)",
+          "request": "launch",
+          "type": "dart",
+          "args": [
+              "--dart-define", "EMULATOR=false",
+              "--web-port", "52233",
+              "--web-renderer", "html",
+              "--web-launch-url", "http://localhost:52233/#/share?id=Gk68uFIcukBglSfaVDAk"
+          ],
+      },
+        {
             "type": "node",
             "request": "launch",
             "name": "Jest single run all tests",

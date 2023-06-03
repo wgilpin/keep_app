@@ -119,30 +119,34 @@ async function getTextEmbedding(text, useCache) {
   // check if the text has already been cached
   const embeddings = useCache ? await getCachedTextSearch(text) : null;
   if (embeddings == null) {
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY || (await getOpenaiKey()),
-      organization: "org-WdPppWM3ixsbsP3FgYID3E9K",
-    });
-
-    text = text.replace("\n", " ");
-    const openai = new OpenAIApi(configuration);
-    const embConfig = {
-      input: text,
-      model,
-    };
-    const emb = await openai.createEmbedding(embConfig);
-    const openAIres = emb.data.data[0]["embedding"];
-    if (useCache) {
-      try {
-        // cache the embedding
-        cacheTextEmbedding(text, openAIres);
+    try {
+      const configuration = new Configuration({
+        apiKey: process.env.OPENAI_API_KEY || (await getOpenaiKey()),
+        organization: "org-WdPppWM3ixsbsP3FgYID3E9K",
+      });
+      text = text.replace("\n", " ");
+      const openai = new OpenAIApi(configuration);
+      const embConfig = {
+        input: text,
+        model,
+      };
+      const emb = await openai.createEmbedding(embConfig);
+      const openAIres = emb.data.data[0]["embedding"];
+      if (useCache) {
+        try {
+          // cache the embedding
+          cacheTextEmbedding(text, openAIres);
+          return openAIres;
+        } catch (error) {
+          logger.error("error getting embedding", error);
+          return [];
+        }
+      } else {
         return openAIres;
-      } catch (error) {
-        logger.error("error getting embedding", error);
-        return [];
       }
-    } else {
-      return openAIres;
+    } catch (error) {
+      logger.error("OpenAI error", {error});
+      return [];
     }
   }
   return embeddings;

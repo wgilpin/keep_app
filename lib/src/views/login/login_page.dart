@@ -54,13 +54,13 @@ class LoginPage extends GetWidget<AuthCtl> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: Text(
             'Doofer',
             style: GoogleFonts.philosopher(
               fontSize: 30,
             ),
           ),
-          automaticallyImplyLeading: false,
         ),
         body: Center(
           child: SizedBox(
@@ -94,12 +94,17 @@ class LoginPage extends GetWidget<AuthCtl> {
                         'Log in',
                       ),
                     ),
-                    addVerticalSpace(40),
+                    addVerticalSpace(30),
+                    Text(
+                      "or",
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    addVerticalSpace(30),
                     TextButton(
                       onPressed: () {
                         Get.to(RegisterPage());
                       },
-                      child: Text('Register'),
+                      child: Text('Register', style: TextStyle(decoration: TextDecoration.underline)),
                     ),
                   ],
                 )),
