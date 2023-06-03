@@ -59,3 +59,4 @@ chromeext/build/prod/
 node_modules/
 package-lock.json
 pubspec.lock
+ios/Podfile.lock
