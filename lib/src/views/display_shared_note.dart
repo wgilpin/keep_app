@@ -54,12 +54,14 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
           }
           if (snapshot.hasData) {
             return SafeArea(
-                child: Center(
+                child: Align(
+              alignment: Alignment.topCenter,
               child: Container(
                   padding: const EdgeInsets.all(20),
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: SingleChildScrollView(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
                           "A note has been shared with you by a Doofer",
