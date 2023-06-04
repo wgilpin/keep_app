@@ -2,8 +2,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
-import '../views/login/login_page.dart';
-
 /// Controller for authentication
 class AuthCtl extends GetxController {
   final FirebaseAuth auth;
