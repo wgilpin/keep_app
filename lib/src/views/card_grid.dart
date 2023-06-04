@@ -10,8 +10,8 @@ import 'package:keep_app/src/views/note_card.dart';
 class CardGrid extends StatelessWidget {
   CardGrid(List<Note> notes, this.onUpdate, this.onPinned, {super.key}) : _notes = notes;
 
-  late Function()? onUpdate;
-  late Function(String, bool)? onPinned;
+  late final Function()? onUpdate;
+  late final Function(String, bool)? onPinned;
   final List<Note> _notes;
 
   onNoteTapped(note) {

@@ -15,7 +15,7 @@ import '../utils/utils.dart';
 class DisplayNote extends StatefulWidget {
   DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _note = note;
 
-  Note _note;
+  late final Note _note;
   final Function()? onChanged;
   final Function(String, bool)? onPinned;
 

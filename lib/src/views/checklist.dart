@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:keep_app/src/notes.dart';
-import 'package:keep_app/src/utils/utils.dart';
 
 class CheckList extends StatefulWidget {
   const CheckList({super.key, this.onChanged, required this.note, required this.showChecked});
