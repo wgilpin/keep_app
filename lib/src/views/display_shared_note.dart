@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,12 +6,11 @@ import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
 import 'package:keep_app/src/views/login/register_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
-import 'package:meta_seo/meta_seo.dart';
 
 class DisplaySharedNoted extends StatefulWidget {
-  final String noteId;
+  final Note note;
 
-  const DisplaySharedNoted(this.noteId, {super.key});
+  const DisplaySharedNoted(this.note, {super.key});
 
   @override
   State<DisplaySharedNoted> createState() => _DisplaySharedNotedState();
@@ -44,57 +42,33 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
           )
         ],
       ),
-      body: FutureBuilder<Object>(
-        future: getNote(widget.noteId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            debugPrint('Snapshot error: ${snapshot.error}');
-            return Center(child: Text("Error loading note ${snapshot.error}"));
-          }
-          if (snapshot.hasData) {
-            Note note = snapshot.data as Note;
-            // set meta tags for OG snippets
-            if (kIsWeb) {
-              MetaSEO metaSEO = MetaSEO();
-              metaSEO.ogTitle(ogTitle: "Doofer");
-              metaSEO.ogDescription(ogDescription: note.title ?? "A shared Note");
-              // TODO: the default image should be 300x300 for whatsapp
-              metaSEO.ogImage(ogImage: note.url ?? "https://doofer.app/assets/images/doofer.png");
-            }
-            return SafeArea(
-                child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                  padding: const EdgeInsets.all(20),
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          "A note has been shared with you by a Doofer",
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        addVerticalSpace(20),
-                        TextButton(
-                            onPressed: () => RegisterPage(),
-                            child: const Text(
-                              "Sign up to Doofer",
-                              style: TextStyle(decoration: TextDecoration.underline),
-                            )),
-                        addVerticalSpace(20),
-                        NoteCard(note, interactable: false),
-                      ],
-                    ),
-                  )),
-            ));
-          }
-          return const Center(child: Text("Note not found"));
-        },
-      ),
+      body: SafeArea(
+          child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+            padding: const EdgeInsets.all(20),
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    "A note has been shared with you by a Doofer",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  addVerticalSpace(20),
+                  TextButton(
+                      onPressed: () => RegisterPage(),
+                      child: const Text(
+                        "Sign up to Doofer",
+                        style: TextStyle(decoration: TextDecoration.underline),
+                      )),
+                  addVerticalSpace(20),
+                  NoteCard(widget.note, interactable: false),
+                ],
+              ),
+            )),
+      )),
     );
   }
 }

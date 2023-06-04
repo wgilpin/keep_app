@@ -19,7 +19,11 @@ class Note {
 
   Note.fromSnapshot(snapshot) {
     try {
-      id = snapshot.id;
+      try {
+        id = snapshot.id;
+      } on NoSuchMethodError catch (_) {
+        id = null;
+      }
       title = snapshot.data()['title'];
       comment = snapshot.data()['comment'];
       snippet = snapshot.data()['snippet'];

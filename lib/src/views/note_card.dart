@@ -208,9 +208,9 @@ class _NoteCardState extends State<NoteCard> {
               InkWell(
                   hoverColor: Colors.transparent,
                   onTap: () => doLaunchUrl(widget._note.url),
-                  child: Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth)),
+                  child: Image.network(getYtThumbnail(widget._note.url) ?? "", fit: BoxFit.fitWidth)),
             // for the small card view, clicking the thumbnail will open the card not the video
-            if (!canOpenVideo) Image.network(getYtThumbnail(widget._note.url), fit: BoxFit.fitWidth),
+            if (!canOpenVideo) Image.network(getYtThumbnail(widget._note.url) ?? "", fit: BoxFit.fitWidth),
           ],
         )));
   }

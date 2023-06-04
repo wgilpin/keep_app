@@ -8,9 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/pageNotFound.dart';
+import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/display_shared_note.dart';
 import 'package:keep_app/src/views/edit.dart';
-import 'package:meta_seo/meta_seo.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -41,10 +41,6 @@ Future<void> main() async {
     debugPrint('Using remote Firestore');
   }
 
-  // set up meta tags for OG snippets
-  if (kIsWeb) {
-    MetaSEO().config();
-  }
   runApp(const MyApp());
 }
 
@@ -142,7 +138,18 @@ class _MyAppState extends State<MyApp> {
     if ((settings.name ?? "").startsWith('/share?')) {
       // extract query params from URI
       final args = Uri.parse(settings.name ?? "").queryParameters;
-      return MaterialPageRoute(builder: (_) => DisplaySharedNoted(args["id"] ?? ""));
+      // return MaterialPageRoute(builder: (_) => DisplaySharedNoted(args["id"] ?? ""));
+      return MaterialPageRoute(builder: (context) {
+        return FutureBuilder(
+            future: FirebaseFirestore.instance.collection('notes').doc(args["id"] ?? "").get(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                Note note = Note.fromSnapshot(snapshot.data!);
+                return DisplaySharedNoted(note);
+              }
+              return const Center(child: CircularProgressIndicator());
+            });
+      });
     }
     return null; //
   };
