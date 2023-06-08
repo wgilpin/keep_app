@@ -15,16 +15,19 @@ class CheckList extends StatefulWidget {
 class _CheckListState extends State<CheckList> {
   late List<CheckItem> _unchecked;
   late List<CheckItem> _checked;
-  late TextEditingController _itemTitleCtl;
-  CheckItem? _editingItem;
+  late TextEditingController _itemTitleCtl; // controller for the input box
+  CheckItem? _editingItem; // if an item is being edited, this is it
 
   late FocusNode inputFocusNode;
 
   @override
   void initState() {
     super.initState();
+    // split the checklist into checked and unchecked
     splitChecklist();
+    // create the controller for the input box
     _itemTitleCtl = TextEditingController(text: "");
+    // focus node for the input box
     inputFocusNode = FocusNode();
   }
 
@@ -36,6 +39,7 @@ class _CheckListState extends State<CheckList> {
   }
 
   void splitChecklist() {
+    // split the checklist into checked and unchecked
     _unchecked = widget.note.checklist.where((element) => !element.checked).toList();
     _checked = widget.note.checklist.where((element) => element.checked).toList();
   }
@@ -74,6 +78,7 @@ class _CheckListState extends State<CheckList> {
 
   getChecklist(List<CheckItem> list, bool showChecked) {
     return ReorderableListView.builder(
+      // allow moving items around
       onReorder: (oldIndex, newIndex) => {
         setState(() {
           if (newIndex > oldIndex) {
@@ -81,6 +86,7 @@ class _CheckListState extends State<CheckList> {
           }
           final item = list.removeAt(oldIndex);
           list.insert(newIndex, item);
+          // write to server
           saveChecklist();
         })
       },
@@ -99,6 +105,7 @@ class _CheckListState extends State<CheckList> {
             if (widget.showChecked) {
               debugPrint("checklist onChanged $newValue");
               setState(() {
+                // set the checked state and move the item to the correct list
                 item.checked = newValue;
                 if (newValue) {
                   _checked.add(item);
@@ -117,16 +124,20 @@ class _CheckListState extends State<CheckList> {
   }
 
   saveChecklist() async {
+    // save the checklist to the server
+    // first update the checklist in the note
     widget.note.checklist = _unchecked + _checked;
     return FirebaseFirestore.instance
         .collection('notes')
         .doc(widget.note.id)
         .update({"checklist": widget.note.checklist.map((e) => e.toJson()).toList()}).then((value) {
       debugPrint('checklist on change');
+      // call the onChanged callback if supplied
       widget.onChanged?.call();
     });
   }
 
+  // called when item is edited
   onEdit(Key? key) {
     // get the item for this key
     debugPrint("onEdit $key");
@@ -148,19 +159,20 @@ class _CheckListState extends State<CheckList> {
                 labelText: 'Add or edit an item',
                 fillColor: Colors.yellow[200],
               ),
-              onSubmitted: (_) => doPressed(),
+              onSubmitted: (_) => doSavePressed(),
             ),
           ),
         ),
         IconButton(
           icon: const Icon(Icons.save),
-          onPressed: doPressed,
+          onPressed: doSavePressed,
         ),
       ],
     );
   }
 
-  void doPressed() {
+  // edit dialog save btn pressed
+  void doSavePressed() {
     debugPrint("onSubmitted");
     setState(() {
       if (_editingItem != null) {
@@ -172,13 +184,16 @@ class _CheckListState extends State<CheckList> {
         // adding a new item
         _unchecked.add(CheckItem(index: _unchecked.length, title: _itemTitleCtl.text, checked: false));
       }
+      // post save, clear the input box
       _itemTitleCtl.text = "";
 
       saveChecklist();
+      // focus bck on the input in case they want to add another item
       inputFocusNode.requestFocus();
     });
   }
 
+  // delete an checklist item
   deleteItem(Key? key) {
     // delete the item for this key
     debugPrint("deleteItem $key");
@@ -187,7 +202,9 @@ class _CheckListState extends State<CheckList> {
       widget.note.checklist.remove(item);
       _itemTitleCtl.text = "";
     });
+    // set up the checked and unchecked lists
     splitChecklist();
+    // save the checklist to the server
     saveChecklist().then(() => widget.onChanged?.call());
   }
 }
@@ -257,6 +274,7 @@ class _LabeledCheckboxState extends State<LabeledCheckbox> {
   }
 
   void doDelete() {
+    // call the delete callback if supplied
     debugPrint('doDelete in LabeledCheckbox');
 
     widget.onDelete?.call(widget.key!);

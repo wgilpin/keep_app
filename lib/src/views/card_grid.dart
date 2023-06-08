@@ -14,6 +14,7 @@ class CardGrid extends StatelessWidget {
   late final Function(String, bool)? onPinned;
   final List<Note> _notes;
 
+  // open the note in a new page when tapped
   onNoteTapped(note) {
     debugPrint("CardGrid.onNoteTapped");
     Get.to(DisplayNote(
@@ -58,9 +59,12 @@ class CardGrid extends StatelessWidget {
     onUpdate?.call();
   }
 
+  // sort order is pinned notes by update order, then unpinned notes by update order
   void sortNotesByPinned() {
+    // 2 lists, pinned and unpinned
     List<Note> pinned = [];
     List<Note> unPinned = [];
+    // for each note, add it to the appropriate list
     for (var note in _notes) {
       if (note.isPinned) {
         pinned.add(note);
@@ -68,6 +72,7 @@ class CardGrid extends StatelessWidget {
         unPinned.add(note);
       }
     }
+    // add
     _notes.clear();
     _notes.addAll(pinned);
     _notes.addAll(unPinned);
