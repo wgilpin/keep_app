@@ -15,6 +15,11 @@ const {getFirestore, Timestamp} = require('firebase-admin/firestore');
 const {initializeApp} = require('firebase-admin/app');
 const similarity = require('compute-cosine-similarity');
 const {stripHtml} = require('string-strip-html');
+const {
+  onDocumentCreated,
+  onDocumentUpdated,
+  onDocumentDeleted,
+} = require('firebase-functions/v2/firestore');
 
 const THRESHOLD = 0.15;
 const MAX_CACHE_SIZE = 20;
@@ -575,19 +580,93 @@ exports.noteSearch = onCall(async (req) => {
   return exports.doNoteSearch(noteId, maxResults, uid, threshold);
 });
 
+// eslint-disable-next-line valid-jsdoc
 /**
  * Firestore on-create trigger
  * Set the embeddings for a new note
  */
-exports.createNote = functions.firestore
-    .document('notes/{noteId}')
-    .onCreate((snap, context) => {
-    // Get an object representing the documenttry {
-      try {
-        const newValue = snap.data();
-        getFirestore()
-            .collection('notes')
-            .doc(context.params.noteId)
+(exports.createNote = onDocumentCreated('notes/{noteId}')),
+(event) => {
+  // Get an object representing the document
+  try {
+    const newValue = event.data;
+    getFirestore()
+        .collection('notes')
+        .doc(event.params.noteId)
+        .set(
+            {
+              updatedAt: Timestamp.fromDate(new Date()),
+            },
+            {merge: true},
+        )
+        .catch((e) => {
+          logger.error('note onCreated - error updating note', e);
+          return false;
+        });
+    // record the update time to the user record
+    const now = Timestamp.fromDate(new Date());
+    getFirestore().collection('users').doc(event.data.user.id).update({
+      lastUpdated: now,
+    });
+
+    exports
+        .updateNoteEmbeddings(
+            newValue.title,
+            newValue.comment,
+            newValue.snippet,
+            event.params.noteId,
+        )
+        .then((_) => 'OK');
+  } catch (error) {
+    logger.error('note onCreated - error', error);
+    return [];
+  }
+};
+
+/**
+ * Firestore on-delete trigger
+ * Remove the embeddings for a deleted note
+ */
+exports.deleteNote = onDocumentDeleted('notes/{noteId}', (event) => {
+  // record the update time to the user record
+  const now = Timestamp.fromDate(new Date());
+  getFirestore().collection('users').doc(event.data.user.id).update({
+    lastUpdated: now,
+  });
+
+  // delete the note embeddings
+  return getFirestore()
+      .collection('embeddings')
+      .doc(event.params.noteId)
+      .delete();
+});
+
+/**
+ * Firestore on-update trigger
+ * Update the embeddings for a note
+ */
+exports.updateNote = onDocumentUpdated('notes/{noteId}', (event) => {
+  try {
+    // Get an object representing the document
+    const newValue = event.data.after.data();
+
+    // and the previous value before this update
+    const previousValue = event.data.before.data();
+
+    // we will pass either the changed title, comment or snippet or nulls
+    const titleChange =
+      newValue.title != previousValue.title ? newValue.title : null;
+    const commentChange =
+      newValue.comment != previousValue.comment ? newValue.comment : null;
+    const snippetChange =
+      newValue.snippet != previousValue.snippet ? newValue.snippet : null;
+
+    // don't update if ~now already to avoid recursion
+    const now = Timestamp.fromDate(new Date());
+    // 500ms since last update? ignore
+    if (titleChange || commentChange || snippetChange) {
+      if (now - event.data.before.data().updatedAt > 500) {
+        event.data.after.ref
             .set(
                 {
                   updatedAt: Timestamp.fromDate(new Date()),
@@ -595,115 +674,34 @@ exports.createNote = functions.firestore
                 {merge: true},
             )
             .catch((e) => {
-              logger.error('note onCreated - error updating note', e);
+              logger.error('note onUpdate - error updating note', e);
               return false;
             });
+
+        logger.debug('note onUpdate - updating user lastUpdated', {
+          titleChange,
+          commentChange,
+          snippetChange,
+        });
         // record the update time to the user record
-        const now = Timestamp.fromDate(new Date());
-        getFirestore().collection('users').doc(snap.data().user.id).update({
+        getFirestore().collection('users').doc(newValue.user.id).update({
           lastUpdated: now,
         });
-
-        exports
-            .updateNoteEmbeddings(
-                newValue.title,
-                newValue.comment,
-                newValue.snippet,
-                context.params.noteId,
-            )
-            .then((_) => 'OK');
-      } catch (error) {
-        logger.error('note onCreated - error', error);
-        return [];
       }
-    });
-
-/**
- * Firestore on-delete trigger
- * Remove the embeddings for a deleted note
- */
-exports.deleteNote = functions.firestore
-    .document('notes/{noteId}')
-    .onDelete((snap, context) => {
-    // record the update time to the user record
-      const now = Timestamp.fromDate(new Date());
-      getFirestore().collection('users').doc(snap.data().user.id).update({
-        lastUpdated: now,
-      });
-
-      // delete the note embeddings
-      return getFirestore()
-          .collection('embeddings')
-          .doc(context.params.noteId)
-          .delete();
-    });
-
-/**
- * Firestore on-update trigger
- * Update the embeddings for a note
- */
-exports.updateNote = functions.firestore
-    .document('notes/{noteId}')
-    .onUpdate((change, context) => {
-      try {
-      // Get an object representing the document
-        const newValue = change.after.data();
-
-        // and the previous value before this update
-        const previousValue = change.before.data();
-
-        // we will pass either the changed title, comment or snippet or nulls
-        const titleChange =
-        newValue.title != previousValue.title ? newValue.title : null;
-        const commentChange =
-        newValue.comment != previousValue.comment ? newValue.comment : null;
-        const snippetChange =
-        newValue.snippet != previousValue.snippet ? newValue.snippet : null;
-
-        // don't update if ~now already to avoid recursion
-        const now = Timestamp.fromDate(new Date());
-        // 500ms since last update? ignore
-        if (titleChange || commentChange || snippetChange) {
-          if (now - change.before.data().updatedAt > 500) {
-            change.after.ref
-                .set(
-                    {
-                      updatedAt: Timestamp.fromDate(new Date()),
-                    },
-                    {merge: true},
-                )
-                .catch((e) => {
-                  logger.error('note onUpdate - error updating note', e);
-                  return false;
-                });
-
-            logger.debug('note onUpdate - updating user lastUpdated', {
+      logger.debug('note onUpdate - updating embeddings', event.params.noteId);
+      exports
+          .updateNoteEmbeddings(
               titleChange,
               commentChange,
               snippetChange,
-            });
-            // record the update time to the user record
-            getFirestore().collection('users').doc(newValue.user.id).update({
-              lastUpdated: now,
-            });
-          }
-          logger.debug(
-              'note onUpdate - updating embeddings',
-              context.params.noteId,
-          );
-          exports
-              .updateNoteEmbeddings(
-                  titleChange,
-                  commentChange,
-                  snippetChange,
-                  context.params.noteId,
-              )
-              .then((_) => 'OK');
-        } else {
-          return [];
-        }
-      } catch (error) {
-        logger.error('note onUpdate - error', error);
-        return [];
-      }
-    });
+              event.params.noteId,
+          )
+          .then((_) => 'OK');
+    } else {
+      return [];
+    }
+  } catch (error) {
+    logger.error('note onUpdate - error', error);
+    return [];
+  }
+});
