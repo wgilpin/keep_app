@@ -208,6 +208,7 @@ class _NoteCardState extends State<NoteCard> {
               InkWell(
                   hoverColor: Colors.transparent,
                   onTap: () => doLaunchUrl(widget._note.url),
+                  // TODO: use cached network image package, when it becomes compatible with google_fonts
                   child: Image.network(getYtThumbnail(widget._note.url) ?? "", fit: BoxFit.fitWidth)),
             // for the small card view, clicking the thumbnail will open the card not the video
             if (!canOpenVideo) Image.network(getYtThumbnail(widget._note.url) ?? "", fit: BoxFit.fitWidth),

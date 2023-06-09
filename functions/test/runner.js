@@ -1,34 +1,43 @@
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable require-jsdoc */
-const index = require("../index.js");
+const index = require('../index.js');
 
-index.doTextSearch("vector", 10, "zdt3YB86kJaxsESbMmkblkqQ3093").then((res) => {
-  console.log(res);
-});
+// **********************************************************************************
+
+// index
+//     .doTextSearch('ray kurzweil', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
+//     .then((res) => {
+//       console.log(res);
+//     });
+
+// **********************************************************************************
 
 async function noteSearch() {
   index
-      .doNoteSearch("Gk68uFIcukBglSfaVDAk", 10, "zdt3YB86kJaxsESbMmkblkqQ3093")
+      .doNoteSearch('Gk68uFIcukBglSfaVDAk', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
       .then((res) => {
-        console.log(res);
+        console.log('RESULTS', res);
       });
 }
 noteSearch();
 
-// const {getFirestore, Timestamp} = require("firebase-admin/firestore");
+// **********************************************************************************
+// const {getFirestore, Timestamp} = require('firebase-admin/firestore');
 
-// async function deleteRelated() {
+// async function applyToAllNotes() {
 //   const db = getFirestore();
-//   const notes = await db.collection("notes").get();
+
+//   const notes = await db.collection('notes').get();
 //   for (const n of notes.docs) {
-//     db.collection("notes")
+//     db.collection('notes')
 //         .doc(n.id)
 //         .update({related: null, relatedUpdated: Timestamp.fromMillis(0)});
 //   }
 // }
 
-// deleteRelated();
+// applyToAllNotes();
+// **********************************************************************************
 
 // // check simialririty for note
 // // const { getFirestore } = require("firebase-admin/firestore");
@@ -88,3 +97,23 @@ noteSearch();
 // }
 
 // checkRelated("EskGBMtnoSUXFOrqI4dV");
+// const PROJECT_ID = 'notes-a522f';
+// const LOCATION = 'us-central1';
+
+// const query = async (text) => {
+//   const apiUrl = `https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2`;
+//   const data = {inputs: text};
+
+//   // call the api
+//   const response = await fetch(apiUrl, {
+//     headers: {
+//       Authorization: `Bearer ${hfToken}`,
+//     },
+//     method: 'POST',
+//     data: JSON.stringify(data),
+//   });
+//   const res = await response.json();
+//   return res;
+// };
+
+// query('the huggingface inference api seems to be free');
