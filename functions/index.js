@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 /**
  * Import function triggers from their respective submodules:
  *
@@ -7,17 +8,19 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {onCall} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
-const functions = require("firebase-functions");
-const {getFirestore, Timestamp} = require("firebase-admin/firestore");
-const {initializeApp} = require("firebase-admin/app");
-const {Configuration, OpenAIApi} = require("openai");
-const similarity = require("compute-cosine-similarity");
-const {stripHtml} = require("string-strip-html");
+const {onCall} = require('firebase-functions/v2/https');
+const logger = require('firebase-functions/logger');
+const functions = require('firebase-functions');
+const {getFirestore, Timestamp} = require('firebase-admin/firestore');
+const {initializeApp} = require('firebase-admin/app');
+const similarity = require('compute-cosine-similarity');
+const {stripHtml} = require('string-strip-html');
 
-const THRESHOLD = 0.75;
+const THRESHOLD = 0.15;
 const MAX_CACHE_SIZE = 20;
+
+let ApiKey = null;
+let myNotes = null;
 
 initializeApp();
 // const auth = getAuth(app);
@@ -25,35 +28,39 @@ initializeApp();
 // Create a new User object in Firestore when a user signs up
 exports.setupNewUser = functions.auth.user().onCreate((user) => {
   const res = getFirestore()
-      .collection("users")
+      .collection('users')
       .doc(user.uid)
       .set(
           {
-            display_name: user.displayName || user.email || "anon",
+            display_name: user.displayName || user.email || 'anon',
             lastUpdated: Timestamp.now(),
           },
           {merge: true},
       );
-  logger.debug("New user created", {uid: user.uid});
+  logger.debug('New user created', {uid: user.uid});
   return res;
 });
 
 /**
  * get the openai key from google cloud secret manager
- *
+ * @param {string} keyName the name of the key to fetch
  * @return {Promise<string>} the openai key
  */
-async function getOpenaiKey() {
+async function getSecretKey(keyName) {
   try {
+    if (ApiKey) {
+      return ApiKey;
+    }
     const {
       SecretManagerServiceClient,
-    } = require("@google-cloud/secret-manager");
+    } = require('@google-cloud/secret-manager');
     const client = new SecretManagerServiceClient();
-    const name = "projects/516790082055/secrets/OPENAI_API_KEY/versions/1";
+    const name = `projects/516790082055/secrets/${keyName}/versions/latest`;
     const res = await client.accessSecretVersion({name});
-    return res[0].payload.data.toString();
+    ApiKey = res[0].payload.data.toString();
+    return ApiKey;
   } catch (error) {
-    logger.error("key service error ", error);
+    logger.error('key service error ', keyName, {error});
   }
 }
 
@@ -65,13 +72,13 @@ async function getOpenaiKey() {
 async function getCachedTextSearch(text) {
   const findText = text.trim().toLowerCase();
   const res = await getFirestore()
-      .collection("embeddings_cache")
+      .collection('embeddings_cache')
       .doc(findText)
       .get();
   if (res.exists) {
     // update the timestamp for the FIFO cache
     getFirestore()
-        .collection("embeddings_cache")
+        .collection('embeddings_cache')
         .doc(findText)
         .update({timestamp: Timestamp.fromDate(new Date())}, {merge: true});
     return res.data().embedding;
@@ -87,24 +94,63 @@ async function getCachedTextSearch(text) {
  * @param {string} uid the user id
  **/
 async function cacheTextEmbedding(text, embedding) {
-  const cache = getFirestore().collection("embeddings_cache");
+  const cache = getFirestore().collection('embeddings_cache');
   // Check if the cache is full.
   // TODO: what if the cache is MAX_CACHE_SIZE + 2
-  const snap = await cache.count().get();
-  if (snap.data().count >= MAX_CACHE_SIZE) {
-    // Delete the oldest entry.
-    cache
-        .orderBy("timestamp", "desc")
-        .limit(1)
-        .get()
-        .then((snapshot) => {
-          snapshot.docs[0].ref.delete();
-        });
+  try {
+    const snap = await cache.count().get();
+    if (snap.exists) {
+      if (snap.data().count >= MAX_CACHE_SIZE) {
+        // Delete the oldest entry.
+        cache
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .get()
+            .then((snapshot) => {
+              snapshot.docs[0].ref.delete();
+            });
+      }
+    }
+  } finally {
+    cache.doc(text.trim().toLowerCase()).set({
+      embedding: embedding,
+      timestamp: Timestamp.fromDate(new Date()),
+    });
   }
-  cache.doc(text.trim().toLowerCase()).set({
-    embedding: embedding,
-    timestamp: Timestamp.fromDate(new Date()),
-  });
+}
+
+/**
+ * get the embedding from hugging face
+ * @param {string} text the text to embed
+ * @return {Promise<Array<number>>} the embedding
+ **/
+async function getHFembeddings(text) {
+  const model = 'all-MiniLM-L6-v2';
+  const apiUrl = `https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/${model}`;
+  const data = {inputs: text, wait_for_model: true};
+  const hfToken = await getSecretKey('HF_API_KEY');
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      // call the api
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${hfToken}`,
+          'pragma': 'no-cache',
+          'cache-control': 'no-cache',
+        },
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      const res = await response.json();
+      return res;
+    } catch (error) {
+      logger.warn('hf error', {error});
+      retries--;
+      // wait 3 seconds
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+  }
 }
 
 /**
@@ -115,37 +161,25 @@ async function cacheTextEmbedding(text, embedding) {
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
 async function getTextEmbedding(text, useCache) {
-  const model = "text-embedding-ada-002";
   // check if the text has already been cached
   const embeddings = useCache ? await getCachedTextSearch(text) : null;
   if (embeddings == null) {
     try {
-      const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY || (await getOpenaiKey()),
-        organization: "org-WdPppWM3ixsbsP3FgYID3E9K",
-      });
-      text = text.replace("\n", " ");
-      const openai = new OpenAIApi(configuration);
-      const embConfig = {
-        input: text,
-        model,
-      };
-      const emb = await openai.createEmbedding(embConfig);
-      const openAIres = emb.data.data[0]["embedding"];
+      const vector = await getHFembeddings(text);
       if (useCache) {
         try {
           // cache the embedding
-          cacheTextEmbedding(text, openAIres);
-          return openAIres;
+          cacheTextEmbedding(text, vector);
+          return vector;
         } catch (error) {
-          logger.error("error getting embedding", error);
+          logger.error('error getting embedding', error);
           return [];
         }
       } else {
-        return openAIres;
+        return vector;
       }
     } catch (error) {
-      logger.error("OpenAI error", {error});
+      logger.error('API  error', {error});
       return [];
     }
   }
@@ -158,11 +192,15 @@ async function getTextEmbedding(text, useCache) {
  * @return {Promise<Array<QueryDocumentSnapshot>>} the notes
  */
 async function getMyNotes(uid) {
-  const userRef = getFirestore().collection("users").doc(uid);
+  if (myNotes) {
+    return myNotes;
+  }
+  const userRef = getFirestore().collection('users').doc(uid);
   const res = await getFirestore()
-      .collection("notes")
-      .where("user", "==", userRef)
+      .collection('notes')
+      .where('user', '==', userRef)
       .get();
+  myNotes = res;
   return res;
 }
 
@@ -193,17 +231,17 @@ async function getSimilarToText(text, notes, uid, count = 10) {
 function cleanSnippet(text) {
   // replace </p> with </p>. in the text
   // so sentences are delimed by periods
-  text = text.replace(/<\/p>/g, "</p>.");
+  text = text.replace(/<\/p>/g, '</p>.');
 
   // strip the html
   text = stripHtml(text, {
-    ignoreTagsWithTheirContents: ["code"],
-    stripTogetherWithTheirContents: ["button"],
+    ignoreTagsWithTheirContents: ['code'],
+    stripTogetherWithTheirContents: ['button'],
     skipHtmlDecoding: true,
   }).result;
 
   // replace any multiple periods with single periods
-  text = text.replace(/\.{2,}/g, ". ");
+  text = text.replace(/\.{2,}/g, '. ');
   return text;
 }
 
@@ -216,7 +254,7 @@ function cleanSnippet(text) {
  */
 exports.getNoteEmbeddings = async (noteSnapshot, uid) => {
   const embSnap = await getFirestore()
-      .collection("embeddings")
+      .collection('embeddings')
       .doc(noteSnapshot.id)
       .get();
   let titleVector;
@@ -261,29 +299,29 @@ exports.updateNoteEmbeddings = async (title, comment, snippet, noteId, uid) => {
   const updates = {};
 
   if (title) {
-    updates["titleVector"] = await getTextEmbedding(title, false);
+    updates['titleVector'] = await getTextEmbedding(title, false);
   }
 
   if (snippet) {
     const clean = cleanSnippet(snippet);
-    updates["snippetVector"] = await getTextEmbedding(clean, false);
+    updates['snippetVector'] = await getTextEmbedding(clean, false);
   }
 
   if (comment) {
-    updates["commentVector"] = await getTextEmbedding(comment, false);
+    updates['commentVector'] = await getTextEmbedding(comment, false);
   }
 
-  logger.debug("updateNoteEmbeddings", noteId);
+  logger.debug('updateNoteEmbeddings', noteId);
   // write any updates to the db
   await getFirestore()
-      .collection("embeddings")
+      .collection('embeddings')
       .doc(noteId)
       .set(updates, {merge: true});
 
   return [
-    updates["titleVector"],
-    updates["snippetVector"],
-    updates["commentVector"],
+    updates['titleVector'],
+    updates['snippetVector'],
+    updates['commentVector'],
   ];
 };
 
@@ -327,9 +365,9 @@ function getNoteSimilarity(noteVecs, searchVecs) {
 function cacheRelated(rankedNotes, related, originalId, userId) {
   const now = Timestamp.fromDate(new Date());
 
-  logger.debug("cacheRelated", originalId);
+  logger.debug('cacheRelated', originalId);
   // update the related notes for the original note
-  getFirestore().collection("notes").doc(originalId).set(
+  getFirestore().collection('notes').doc(originalId).set(
       {
         related,
         relatedUpdated: now,
@@ -376,6 +414,7 @@ async function vecSimilarRanked(
   for (const id in vecs) {
     // for a note with embs 'noteVec', calculate the similarity
     const score = getNoteSimilarity(vecs[id], searchVecs);
+    console.log(`Similarity score : ${score} for ${id} v. ${originalId}`);
     if (score > threshold) {
       similarityScores[id] = score;
     }
@@ -417,7 +456,7 @@ exports.doTextSearch = async function(searchText, maxResults, uid) {
   const results = {};
 
   if (notes.length == 0) {
-    logger.debug("textSearch - no notes", uid);
+    logger.debug('textSearch - no notes', uid);
     return [];
   }
 
@@ -476,16 +515,16 @@ exports.doNoteSearch = async function(
     threshold = THRESHOLD,
 ) {
   // get the note
-  const note = await getFirestore().collection("notes").doc(noteId).get();
+  const note = await getFirestore().collection('notes').doc(noteId).get();
   const {title, comment, snippet} = note.data();
 
   // only search if there are text fields
   if (title || comment || snippet) {
     // does the original note have a valid related cache?
-    if (note.data().related) {
-      const user = await getFirestore().collection("users").doc(uid).get();
+    if (note.data().related && note.data().related.length) {
+      const user = await getFirestore().collection('users').doc(uid).get();
       if (user.data().lastUpdated < note.data().relatedUpdated) {
-        logger.debug("noteSearch - using cache", {
+        logger.debug('noteSearch - using cache', {
           uid,
           lastUpdated: user.data().lastUpdated,
           relatedUpdated: note.data().relatedUpdated,
@@ -494,7 +533,7 @@ exports.doNoteSearch = async function(
       }
     }
 
-    logger.debug("noteSearch - getting related");
+    logger.debug('noteSearch - getting related');
     // we didn't find a valid cache, so search for related notes
     const notes = await getMyNotes(uid);
 
@@ -541,13 +580,13 @@ exports.noteSearch = onCall(async (req) => {
  * Set the embeddings for a new note
  */
 exports.createNote = functions.firestore
-    .document("notes/{noteId}")
+    .document('notes/{noteId}')
     .onCreate((snap, context) => {
     // Get an object representing the documenttry {
       try {
         const newValue = snap.data();
         getFirestore()
-            .collection("notes")
+            .collection('notes')
             .doc(context.params.noteId)
             .set(
                 {
@@ -556,12 +595,12 @@ exports.createNote = functions.firestore
                 {merge: true},
             )
             .catch((e) => {
-              logger.error("note onCreated - error updating note", e);
+              logger.error('note onCreated - error updating note', e);
               return false;
             });
         // record the update time to the user record
         const now = Timestamp.fromDate(new Date());
-        getFirestore().collection("users").doc(snap.data().user.id).update({
+        getFirestore().collection('users').doc(snap.data().user.id).update({
           lastUpdated: now,
         });
 
@@ -572,9 +611,9 @@ exports.createNote = functions.firestore
                 newValue.snippet,
                 context.params.noteId,
             )
-            .then((_) => "OK");
+            .then((_) => 'OK');
       } catch (error) {
-        logger.error("note onCreated - error", error);
+        logger.error('note onCreated - error', error);
         return [];
       }
     });
@@ -584,17 +623,17 @@ exports.createNote = functions.firestore
  * Remove the embeddings for a deleted note
  */
 exports.deleteNote = functions.firestore
-    .document("notes/{noteId}")
+    .document('notes/{noteId}')
     .onDelete((snap, context) => {
     // record the update time to the user record
       const now = Timestamp.fromDate(new Date());
-      getFirestore().collection("users").doc(snap.data().user.id).update({
+      getFirestore().collection('users').doc(snap.data().user.id).update({
         lastUpdated: now,
       });
 
       // delete the note embeddings
       return getFirestore()
-          .collection("embeddings")
+          .collection('embeddings')
           .doc(context.params.noteId)
           .delete();
     });
@@ -604,7 +643,7 @@ exports.deleteNote = functions.firestore
  * Update the embeddings for a note
  */
 exports.updateNote = functions.firestore
-    .document("notes/{noteId}")
+    .document('notes/{noteId}')
     .onUpdate((change, context) => {
       try {
       // Get an object representing the document
@@ -634,22 +673,22 @@ exports.updateNote = functions.firestore
                     {merge: true},
                 )
                 .catch((e) => {
-                  logger.error("note onUpdate - error updating note", e);
+                  logger.error('note onUpdate - error updating note', e);
                   return false;
                 });
 
-            logger.debug("note onUpdate - updating user lastUpdated", {
+            logger.debug('note onUpdate - updating user lastUpdated', {
               titleChange,
               commentChange,
               snippetChange,
             });
             // record the update time to the user record
-            getFirestore().collection("users").doc(newValue.user.id).update({
+            getFirestore().collection('users').doc(newValue.user.id).update({
               lastUpdated: now,
             });
           }
           logger.debug(
-              "note onUpdate - updating embeddings",
+              'note onUpdate - updating embeddings',
               context.params.noteId,
           );
           exports
@@ -659,12 +698,12 @@ exports.updateNote = functions.firestore
                   snippetChange,
                   context.params.noteId,
               )
-              .then((_) => "OK");
+              .then((_) => 'OK');
         } else {
           return [];
         }
       } catch (error) {
-        logger.error("note onUpdate - error", error);
+        logger.error('note onUpdate - error', error);
         return [];
       }
     });
