@@ -21,11 +21,10 @@ const {
   onDocumentDeleted,
 } = require('firebase-functions/v2/firestore');
 
-const THRESHOLD = 0.15;
+const THRESHOLD = 0.2;
 const MAX_CACHE_SIZE = 20;
 
 let ApiKey = null;
-let myNotes = null;
 
 initializeApp();
 // const auth = getAuth(app);
@@ -134,7 +133,7 @@ async function getHFembeddings(text) {
   const apiUrl = `https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/${model}`;
   const data = {inputs: text, wait_for_model: true};
   const hfToken = await getSecretKey('HF_API_KEY');
-  let retries = 3;
+  let retries = 4;
   while (retries > 0) {
     try {
       // call the api
@@ -148,12 +147,15 @@ async function getHFembeddings(text) {
         body: JSON.stringify(data),
       });
       const res = await response.json();
+      if (res.error) {
+        throw new Error(res.error);
+      }
       return res;
     } catch (error) {
       logger.warn('hf error', {error});
       retries--;
-      // wait 3 seconds
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // wait 7 seconds
+      await new Promise((resolve) => setTimeout(resolve, 7000));
     }
   }
 }
@@ -197,15 +199,11 @@ async function getTextEmbedding(text, useCache) {
  * @return {Promise<Array<QueryDocumentSnapshot>>} the notes
  */
 async function getMyNotes(uid) {
-  if (myNotes) {
-    return myNotes;
-  }
   const userRef = getFirestore().collection('users').doc(uid);
   const res = await getFirestore()
       .collection('notes')
       .where('user', '==', userRef)
       .get();
-  myNotes = res;
   return res;
 }
 
@@ -520,7 +518,9 @@ exports.doNoteSearch = async function(
     threshold = THRESHOLD,
 ) {
   // get the note
-  const note = await getFirestore().collection('notes').doc(noteId).get();
+  const notes = await getMyNotes(uid);
+  // find the note with note.id == noteId
+  const note = notes.docs.find((n) => n.id == noteId);
   const {title, comment, snippet} = note.data();
 
   // only search if there are text fields
@@ -540,7 +540,6 @@ exports.doNoteSearch = async function(
 
     logger.debug('noteSearch - getting related');
     // we didn't find a valid cache, so search for related notes
-    const notes = await getMyNotes(uid);
 
     // if the user has no other notes, return empty
     if (notes.length <= 1) {
