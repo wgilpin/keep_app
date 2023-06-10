@@ -6,7 +6,7 @@ const index = require('../index.js');
 // **********************************************************************************
 
 index
-    .doTextSearch('ray kurzweil', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
+    .doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
     .then((res) => {
       console.log(res);
     });

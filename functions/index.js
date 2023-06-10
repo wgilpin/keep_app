@@ -51,20 +51,24 @@ exports.setupNewUser = functions.auth.user().onCreate((user) => {
  * @return {Promise<string>} the openai key
  */
 async function getSecretKey(keyName) {
-  try {
-    if (ApiKey) {
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      if (ApiKey) {
+        return ApiKey;
+      }
+      const {
+        SecretManagerServiceClient,
+      } = require('@google-cloud/secret-manager');
+      const client = new SecretManagerServiceClient();
+      const name = `projects/516790082055/secrets/${keyName}/versions/latest`;
+      const res = await client.accessSecretVersion({name});
+      ApiKey = res[0].payload.data.toString();
       return ApiKey;
+    } catch (error) {
+      logger.error('key service error ', keyName, {error});
+      retries--;
     }
-    const {
-      SecretManagerServiceClient,
-    } = require('@google-cloud/secret-manager');
-    const client = new SecretManagerServiceClient();
-    const name = `projects/516790082055/secrets/${keyName}/versions/latest`;
-    const res = await client.accessSecretVersion({name});
-    ApiKey = res[0].payload.data.toString();
-    return ApiKey;
-  } catch (error) {
-    logger.error('key service error ', keyName, {error});
   }
 }
 
@@ -115,8 +119,12 @@ async function cacheTextEmbedding(text, embedding) {
             });
       }
     }
+  } catch (error) {
+    logger.error('cache error', {error});
   } finally {
-    cache.doc(text.trim().toLowerCase()).set({
+    const trimmedText = text.trim().toLowerCase();
+    logger.debug('cache text', trimmedText);
+    cache.doc(trimmedText).set({
       embedding: embedding,
       timestamp: Timestamp.fromDate(new Date()),
     });
