@@ -14,9 +14,9 @@ import 'package:keep_app/src/views/recommend.dart';
 import '../utils/utils.dart';
 
 class DisplayNote extends StatefulWidget {
-  DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _note = note;
+  const DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _initialNote = note;
 
-  late Note _note;
+  final Note _initialNote;
   final Function()? onChanged;
   final Function(String, bool)? onPinned;
 
@@ -28,21 +28,23 @@ class _DisplayNoteState extends State<DisplayNote> {
   late Future<List<Map<String, String>>> relatedNotes;
   final _checkController = TextEditingController();
   late bool hasChecklist;
+  late Note _note;
 
   @override
   initState() {
     super.initState();
+    _note = widget._initialNote;
     relatedNotes = getRelatedNotes();
-    hasChecklist = widget._note.checklist.isNotEmpty;
+    hasChecklist = _note.checklist.isNotEmpty;
   }
 
   void doPinnedChange(String id, bool state) {
     debugPrint('DisplayNote.doPinnedChange');
 
     setState(() {
-      widget._note.isPinned = state;
+      _note.isPinned = state;
     });
-    widget.onPinned?.call(widget._note.id!, state);
+    widget.onPinned?.call(_note.id!, state);
   }
 
   @override
@@ -83,7 +85,7 @@ class _DisplayNoteState extends State<DisplayNote> {
         child: Column(
           children: [
             NoteCard(
-              widget._note,
+              _note,
               onTapped: null,
               onPinned: doPinnedChange,
               interactable: true,
@@ -100,10 +102,10 @@ class _DisplayNoteState extends State<DisplayNote> {
                   ),
                 ),
                 Tooltip(
-                  message: widget._note.isShared ? 'Stop sharingthis note' : 'Share this note',
+                  message: _note.isShared ? 'Stop sharingthis note' : 'Share this note',
                   child: IconButton(
                     onPressed: doShare,
-                    icon: Icon(Icons.share, color: widget._note.isShared ? Colors.red[900] : null),
+                    icon: Icon(Icons.share, color: _note.isShared ? Colors.red[900] : null),
                   ),
                 ),
                 Tooltip(
@@ -134,14 +136,14 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   void doEditCard() {
-    Get.to(EditNoteForm(widget._note))?.then(
+    Get.to(EditNoteForm(_note))?.then(
       (updatedNoteID) async {
         if (updatedNoteID != null) {
           // note has been updated, reload it
           final note = await getNote(updatedNoteID);
           setState(
             () {
-              widget._note = note;
+              _note = note;
             },
           );
           // if the parent widget supplied a callback, call it
@@ -198,13 +200,13 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   Future<List<Map<String, String>>> getRelatedNotes() async {
     // return [note, note, note, note, note, note];
-    final List<Map<String, String>> related = await Recommender.noteSearch(widget._note, 9, context);
+    final List<Map<String, String>> related = await Recommender.noteSearch(_note, 9, context);
     return related;
   }
 
   onCardTapped(noteId) async {
     debugPrint("displayNote.onCardTapped");
-    widget._note = await getNote(noteId);
+    _note = await getNote(noteId);
     setState(() {
       relatedNotes = getRelatedNotes();
     });
@@ -240,7 +242,7 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doDelete() {
     debugPrint("DisplayNote.doDelete");
-    FirebaseFirestore.instance.collection('notes').doc(widget._note.id!).delete();
+    FirebaseFirestore.instance.collection('notes').doc(_note.id!).delete();
     Get.back();
   }
 
@@ -321,14 +323,14 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void saveNewItem() {
     if (_checkController.text.isNotEmpty) {
-      FirebaseFirestore.instance.collection("notes").doc(widget._note.id!).update({
+      FirebaseFirestore.instance.collection("notes").doc(_note.id!).update({
         "checklist": FieldValue.arrayUnion([
           {"title": _checkController.text, "checked": false}
         ])
       }).then((value) {
         setState(() {
           CheckItem newItem = CheckItem.fromTitle(_checkController.text);
-          widget._note.checklist.add(newItem);
+          _note.checklist.add(newItem);
           _checkController.clear();
         });
         doChanged();
@@ -340,13 +342,13 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doShare() {
     // set the shared flag on the note in firebase
-    FirebaseFirestore.instance.collection("notes").doc(widget._note.id!).update({"shared": true}).then((value) {
+    FirebaseFirestore.instance.collection("notes").doc(_note.id!).update({"shared": true}).then((value) {
       setState(() {
-        widget._note.isShared = true;
+        _note.isShared = true;
       });
       doChanged();
     });
-    String url = makeShareURL(widget._note.id!);
+    String url = makeShareURL(_note.id!);
     debugPrint('DisplayNote.doShare: $url');
     Clipboard.setData(ClipboardData(text: url));
     Get.snackbar("Note can be shared", "The link has been copied to the clipboard",
