@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/note_controller.dart';
 import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/card_grid.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:keep_app/src/views/login/profile.dart';
@@ -108,27 +109,7 @@ class _HomePageState extends State<HomePage> {
         },
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.yellow[700],
-        selectedItemColor: Colors.brown[900],
-        unselectedItemColor: Colors.grey[500],
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            Get.to(const Profile());
-          }
-        },
-      ),
+      bottomNavigationBar: const BottomNav(0),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
 class Profile extends StatelessWidget {
@@ -45,27 +46,7 @@ class Profile extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.yellow[700],
-        selectedItemColor: Colors.brown[900],
-        unselectedItemColor: Colors.grey[500],
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Get.to(const HomePage());
-          }
-        },
-      ),
+      bottomNavigationBar: BottomNav(1),
     );
   }
 
@@ -97,8 +78,8 @@ class Profile extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       icon: Icon(Icons.send),
-                      onPressed: () => sendPasswordCode(emailCtl.text),
-                      label: Text("Send me a code"),
+                      onPressed: () => sendPasswordChangeLink(emailCtl.text),
+                      label: Text("Send me a link"),
                     ),
                   ],
                 )
@@ -114,7 +95,7 @@ class Profile extends StatelessWidget {
     );
   }
 
-  void sendPasswordCode(email) {
+  void sendPasswordChangeLink(email) {
     final bool emailValid = GetUtils.isEmail(email);
     if (!emailValid) {
       Get.snackbar("Invalid Email", "You must be supply a valid email address",
@@ -123,7 +104,7 @@ class Profile extends StatelessWidget {
     }
     Get.find<AuthCtl>().auth.sendPasswordResetEmail(email: email);
     Get.back();
-    Get.snackbar("Check your inbox", "If that email matches your login email, you will receive a password reset code.",
+    Get.snackbar("Check your inbox", "If that email matches your login email, you will receive a password reset link.",
         snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 5));
   }
 }
