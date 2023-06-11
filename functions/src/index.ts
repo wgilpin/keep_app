@@ -8,7 +8,7 @@
  */
 
 import * as firebaseFunctions from 'firebase-functions'
-import {QuerySnapshot, getFirestore, Timestamp} from 'firebase-admin/firestore'
+import {QuerySnapshot, getFirestore, Timestamp, DocumentSnapshot} from 'firebase-admin/firestore'
 import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
 import {initializeApp} from 'firebase-admin/app'
@@ -20,6 +20,7 @@ import {SecretManagerServiceClient} from '@google-cloud/secret-manager'
 
 const THRESHOLD = 0.2
 const MAX_CACHE_SIZE = 20
+const HF_SECRET_NAME = 'HF_API_KEY/versions/1'
 
 let ApiKey: string | null = null
 
@@ -71,7 +72,7 @@ async function getSecretKey(keyName: string): Promise<string | null> {
       }
 
       const client = new SecretManagerServiceClient()
-      const name = `projects/516790082055/secrets/${keyName}/versions/latest`
+      const name = `projects/516790082055/secrets/${keyName}`
       const res = await client.accessSecretVersion({name})
       ApiKey = res[0]?.payload?.data?.toString() ?? null
       return ApiKey
@@ -148,7 +149,7 @@ async function getHFembeddings(text: string): Promise<number[]> {
   const model = 'all-MiniLM-L6-v2'
   const apiUrl = `https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/${model}`
   const data = {inputs: text, wait_for_model: true}
-  const hfToken: string | null = await getSecretKey('HF_API_KEY')
+  const hfToken: string | null = await getSecretKey(HF_SECRET_NAME)
   let retries = 4
   while (retries > 0) {
     try {
@@ -262,6 +263,31 @@ function cleanSnippet(text: string): string {
 }
 
 type EmbeddingsRecord = { [id: string]: number[][] }
+
+/**
+ * check if the note has embeddings
+ * @param {DocumentSnapshot} snap the snapshot of the note
+ * @return {boolean} note has embeddings
+ */
+function hasEmbeddings(snap: DocumentSnapshot): boolean {
+  if (!snap.exists) {
+    return false
+  }
+  if (!snap.data()) {
+    return false
+  }
+  if (snap.data()?.titleVector && snap.data()?.titleVector.length > 0) {
+    return true
+  }
+  if (snap.data()?.snippetVector && snap.data()?.snippetVector.length > 0) {
+    return true
+  }
+  if (snap.data()?.commentVector && snap.data()?.commentVector.length > 0) {
+    return true
+  }
+  return false
+}
+
 /**
  * get the 3 embeddings for a note title, snippet, comment
  * @param {string} noteSnapshot the note
@@ -276,7 +302,7 @@ export async function getNoteEmbeddings(
   let titleVector: number[]
   let commentVector: number[]
   let snippetVector: number[]
-  if (embeddingsSnap.exists) {
+  if (hasEmbeddings(embeddingsSnap)) {
     titleVector = embeddingsSnap.data()?.titleVector
     snippetVector = embeddingsSnap.data()?.snippetVector
     commentVector = embeddingsSnap.data()?.commentVector

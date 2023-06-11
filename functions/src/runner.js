@@ -2,22 +2,20 @@
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable require-jsdoc */
-import {doNoteSearch, doTextSearch} from '../src/index'
+const {doNoteSearch} = require('../lib/index.js')
 
 // **********************************************************************************
 
-doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').
-  then((res: object[]) => {
-    console.log(res)
-  })
+// doTextSearch("flutter", 10, "zdt3YB86kJaxsESbMmkblkqQ3093").then(res => {
+//   console.log(res);
+// });
 
 // **********************************************************************************
 
 async function noteSearch() {
-  doNoteSearch('Gk68uFIcukBglSfaVDAk', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').
-    then((res: object[]) => {
-      console.log('RESULTS', res)
-    })
+  doNoteSearch('2dTbQ7XR59HHeNKwoHOD', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').then((res) => {
+    console.log('RESULTS', res)
+  })
 }
 noteSearch()
 
