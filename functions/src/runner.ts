@@ -1,26 +1,25 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable require-jsdoc */
-const index = require('../index.js');
+import {doNoteSearch, doTextSearch} from '../src/index'
 
 // **********************************************************************************
 
-index
-    .doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
-    .then((res) => {
-      console.log(res);
-    });
+doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').
+  then((res: object[]) => {
+    console.log(res)
+  })
 
 // **********************************************************************************
 
 async function noteSearch() {
-  index
-      .doNoteSearch('Gk68uFIcukBglSfaVDAk', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093')
-      .then((res) => {
-        console.log('RESULTS', res);
-      });
+  doNoteSearch('Gk68uFIcukBglSfaVDAk', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').
+    then((res: object[]) => {
+      console.log('RESULTS', res)
+    })
 }
-noteSearch();
+noteSearch()
 
 // **********************************************************************************
 // const {getFirestore, Timestamp} = require('firebase-admin/firestore');
