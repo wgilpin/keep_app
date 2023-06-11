@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import * as functions from 'firebase-functions'
+import * as firebaseFunctions from 'firebase-functions'
 import {QuerySnapshot, getFirestore, Timestamp} from 'firebase-admin/firestore'
 import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
@@ -42,7 +42,7 @@ function noteSummariesToIds(summaries: NoteSummary[]): object[] {
 }
 
 // Create a new User object in Firestore when a user signs up
-export const setupNewUser = functions.auth.user().onCreate((user) => {
+export const setupNewUser = firebaseFunctions.auth.user().onCreate((user) => {
   const res = getFirestore()
     .collection('users')
     .doc(user.uid)
