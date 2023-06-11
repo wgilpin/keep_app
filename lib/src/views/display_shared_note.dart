@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
-import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
 import 'package:keep_app/src/views/login/register_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
@@ -56,14 +55,14 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
                     "A note has been shared with you by a Doofer",
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  addVerticalSpace(20),
+                  const SizedBox(height: 20),
                   TextButton(
                       onPressed: () => RegisterPage(),
                       child: const Text(
                         "Sign up to Doofer",
                         style: TextStyle(decoration: TextDecoration.underline),
                       )),
-                  addVerticalSpace(20),
+                  const SizedBox(height: 20),
                   NoteCard(widget.note, interactable: false),
                 ],
               ),

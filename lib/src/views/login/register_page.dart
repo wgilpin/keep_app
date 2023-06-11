@@ -4,9 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../../controllers/auth_controller.dart';
-import '../../utils/utils.dart';
+import 'package:keep_app/src/controllers/auth_controller.dart';
 
 class RegisterPage extends GetWidget<AuthCtl> {
   final TextEditingController emailCtl = TextEditingController();
@@ -38,24 +36,24 @@ class RegisterPage extends GetWidget<AuthCtl> {
                       "Create a Doofer account",
                       style: const TextStyle(fontSize: 24),
                     ),
-                    addVerticalSpace(40),
+                    const SizedBox(height: 40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Email'),
                       controller: emailCtl,
                     ),
-                    addVerticalSpace(40),
+                    const SizedBox(height: 40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Password'),
                       controller: passwordCtl,
                       obscureText: true,
                     ),
-                    addVerticalSpace(40),
+                    const SizedBox(height: 40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Confirm password'),
                       controller: passwordCtl2,
                       obscureText: true,
                     ),
-                    addVerticalSpace(40),
+                    const SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: validate,
                       child: Text(

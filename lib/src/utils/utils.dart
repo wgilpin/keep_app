@@ -1,8 +1,3 @@
-import 'package:flutter/material.dart';
-
-// add "height" pixels of vertical space, for use in columns
-Widget addVerticalSpace(int height) => SizedBox(height: height.toDouble());
-
 // get the youtube thumbnail given a youtube URL
 String? getYtThumbnail(String? url) {
   if (url == null) return null;

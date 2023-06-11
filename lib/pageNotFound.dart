@@ -24,22 +24,22 @@ class PageNotFound extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
-            addVerticalSpace(60),
+            const SizedBox(height: 60),
             const Text(
               "That link didn't work",
               style: TextStyle(fontSize: 24),
             ),
-            addVerticalSpace(20),
+            const SizedBox(height: 20),
             const Text(
               "It might have expired.",
               style: TextStyle(fontSize: 20),
             ),
-            addVerticalSpace(40),
+            const SizedBox(height: 40),
             const Text(
               "To login or register, click here",
               style: TextStyle(fontSize: 20),
             ),
-            addVerticalSpace(20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Get.to(LoginPage()),
               child: const Text("Login"),

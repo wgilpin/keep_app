@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/views/home_page.dart';
 
-import '../../controllers/auth_controller.dart';
-import '../../utils/utils.dart';
-import '../home_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends GetWidget<AuthCtl> {
@@ -74,32 +73,32 @@ class LoginPage extends GetWidget<AuthCtl> {
                       "Login in to Doofer",
                       style: const TextStyle(fontSize: 24),
                     ),
-                    addVerticalSpace(40),
+                    SizedBox(height: 40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Email'),
                       controller: emailCtl,
                       onFieldSubmitted: (_) => doLogin(),
                     ),
-                    addVerticalSpace(40),
+                    SizedBox(height: 40),
                     TextFormField(
                       decoration: InputDecoration(hintText: 'Password'),
                       controller: passwordCtl,
                       obscureText: true,
                       onFieldSubmitted: (_) => doLogin(),
                     ),
-                    addVerticalSpace(40),
+                    SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: doLogin,
                       child: Text(
                         'Log in',
                       ),
                     ),
-                    addVerticalSpace(30),
+                    SizedBox(height: 30),
                     Text(
                       "or",
                       style: const TextStyle(fontSize: 14),
                     ),
-                    addVerticalSpace(30),
+                    SizedBox(height: 30),
                     TextButton(
                       onPressed: () {
                         Get.to(RegisterPage());
