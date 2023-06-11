@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/home_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
@@ -49,10 +50,15 @@ class _DisplayNoteState extends State<DisplayNote> {
     MediaQueryData media = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Doofer',
-          style: GoogleFonts.philosopher(
-            fontSize: 30,
+        title: InkWell(
+          onTap: () {
+            Get.to(const HomePage());
+          },
+          child: Text(
+            'Doofer',
+            style: GoogleFonts.philosopher(
+              fontSize: 30,
+            ),
           ),
         ),
       ),

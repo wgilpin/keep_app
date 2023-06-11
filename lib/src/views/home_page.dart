@@ -10,7 +10,7 @@ import 'package:keep_app/src/views/login/profile.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key? key}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -31,13 +31,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void doChanged() {
-    print("Homepage.changed");
     _notesStream = NoteController.getData();
     setState(() {});
   }
 
   onPinnedNote(String noteId, bool value) async {
-    print("CardGrid.onPinned");
+    debugPrint("CardGrid.onPinned");
     // write note to firestore
     debugPrint('toggle pinned for $noteId}}');
     await FirebaseFirestore.instance.collection("notes").doc(noteId).update({"isPinned": value});
