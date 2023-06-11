@@ -8,7 +8,7 @@
  */
 
 import * as firebaseFunctions from 'firebase-functions'
-import {QuerySnapshot, getFirestore, Timestamp, DocumentSnapshot} from 'firebase-admin/firestore'
+import {QuerySnapshot, getFirestore, Timestamp, DocumentSnapshot, QueryDocumentSnapshot} from 'firebase-admin/firestore'
 import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
 import {initializeApp} from 'firebase-admin/app'
@@ -230,9 +230,9 @@ async function getMyNotes(uid: string): Promise<QuerySnapshot> {
  * @return {string[]} ids of most similar notes sorted by similarity
  */
 async function getSimilarToText(
-  text: string,
-  notes: QuerySnapshot<FirebaseFirestore.DocumentData>,
-  count = 10
+    text: string,
+    notes: QuerySnapshot,
+    count = 10
 ): Promise<NoteSummary[]> {
   const textVector: number[] = await getTextEmbedding(text, true)
   const similarNoteIds: NoteSummary[] = await vecSimilarRanked([textVector], notes, null, count)
@@ -296,7 +296,7 @@ function hasEmbeddings(snap: DocumentSnapshot): boolean {
  * @see https://beta.openai.com/docs/api-reference/retrieve-embedding
  */
 export async function getNoteEmbeddings(
-  noteSnapshot: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>
+  noteSnapshot: QueryDocumentSnapshot
 ): Promise<EmbeddingsRecord> {
   const embeddingsSnap = await getFirestore().collection('embeddings').doc(noteSnapshot.id).get()
   let titleVector: number[]
@@ -327,10 +327,10 @@ export async function getNoteEmbeddings(
  */
 
 export const updateNoteEmbeddings = async (
-  title: string,
-  comment: string,
-  snippet: string,
-  noteId: string
+    title: string,
+    comment: string,
+    snippet: string,
+    noteId: string
 ): Promise<number[][]> => {
   if (!(title || snippet || comment)) {
     return []
@@ -384,12 +384,11 @@ function getNoteSimilarity(noteVecs: number[][], searchVecs: number[][]): number
 
 /**
  * cache the related notes to the original note
- * @param {string[]} rankedNotes the ranked notes
  * @param {dict[]} related the related notes
  * @param {string} originalId the id of the original note
  * @return {void}
  **/
-function cacheRelated(rankedNotes: string[], related: NoteSummary[], originalId: string) {
+function cacheRelated(related: NoteSummary[], originalId: string) {
   const now = Timestamp.fromDate(new Date())
 
   logger.debug('cacheRelated', originalId)
@@ -416,11 +415,11 @@ function cacheRelated(rankedNotes: string[], related: NoteSummary[], originalId:
  * @return {NoteSummary[]} ids of most similar notes sorted by similarity
  */
 async function vecSimilarRanked(
-  searchVecs: number[][],
-  notes: QuerySnapshot,
-  originalId: string | null,
-  count = 10,
-  threshold = THRESHOLD
+    searchVecs: number[][],
+    notes: QuerySnapshot,
+    originalId: string | null,
+    count = 10,
+    threshold = THRESHOLD
 ): Promise<NoteSummary[]> {
   const promises: Promise<object>[] = []
   for (const n of notes.docs) {
@@ -454,13 +453,6 @@ async function vecSimilarRanked(
   // -> list of ids
   const rankedNotes = sortedScores.slice(0, count).map((score) => score[0])
 
-  // const related = rankedNotes.map((id) => {
-  //   return {
-  //     id,
-  //     title: notes.docs.find((n) => n.id == id)?.data().title ?? '',
-  //   }
-  // })
-
   const related: NoteSummary[] = []
   for (const id of rankedNotes) {
     const title = notes.docs.find((n) => n.id == id)?.data().title ?? ''
@@ -469,7 +461,7 @@ async function vecSimilarRanked(
   // cache the related notes to the original note
   if (originalId) {
     // get an array of {id, title, updated} for the related notes
-    cacheRelated(rankedNotes, related, originalId)
+    cacheRelated(related, originalId)
   }
   return related
 }
@@ -526,7 +518,11 @@ export const doTextSearch = async function(searchText: string, maxResults: numbe
 export const textSearch = onCall(async (req) => {
   const {searchText, maxResults} = req.data
   const uid = req.auth?.uid
-  return exports.doTextSearch(searchText, maxResults, uid)
+  if (!uid) {
+    logger.debug('textSearch - uid not found')
+    return []
+  }
+  return doTextSearch(searchText, maxResults, uid)
 })
 
 /**
@@ -538,10 +534,10 @@ export const textSearch = onCall(async (req) => {
  * @return {object[]} the most similar notes sorted by similarity
  */
 export const doNoteSearch = async function(
-  noteId: string,
-  maxResults: number,
-  uid: string,
-  threshold = THRESHOLD
+    noteId: string,
+    maxResults: number,
+    uid: string,
+    threshold = THRESHOLD
 ): Promise<object[]> {
   // get the note
   const notes = await getMyNotes(uid)
@@ -598,8 +594,11 @@ export const doNoteSearch = async function(
 export const noteSearch = onCall(async (req) => {
   const {noteId, maxResults, threshold} = req.data
   const uid = req.auth?.uid
-
-  return exports.doNoteSearch(noteId, maxResults, uid, threshold)
+  if (!uid){
+    logger.error('noteSearch - no uid')
+    return []
+  }
+  return doNoteSearch(noteId, maxResults, uid, threshold)
 })
 
 // eslint-disable-next-line valid-jsdoc
