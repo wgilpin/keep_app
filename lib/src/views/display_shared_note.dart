@@ -36,7 +36,7 @@ class _DisplaySharedNotedState extends State<DisplaySharedNoted> {
                   backgroundColor: MaterialStateProperty.all<Color>(Colors.brown[700]!),
                   foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                 ),
-                onPressed: () => Get.to(LoginPage()),
+                onPressed: () => Get.to(() => LoginPage()),
                 child: const Text("Login", style: TextStyle(fontWeight: FontWeight.bold))),
           )
         ],

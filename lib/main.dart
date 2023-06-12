@@ -92,11 +92,11 @@ class _MyAppState extends State<MyApp> {
       final bool isUrl = (value ?? "").toLowerCase().startsWith("http");
       debugPrint('Got shared ${isUrl ? "url" : "text"}: $value');
 
-      Get.to(EditNoteForm(
-        null,
-        snippet: isUrl ? null : value,
-        url: isUrl ? value : null,
-      ));
+      Get.to(() => EditNoteForm(
+            null,
+            snippet: isUrl ? null : value,
+            url: isUrl ? value : null,
+          ));
     }
   }
 

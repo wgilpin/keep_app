@@ -54,7 +54,7 @@ class _DisplayNoteState extends State<DisplayNote> {
       appBar: AppBar(
         title: InkWell(
           onTap: () {
-            Get.to(const HomePage());
+            Get.to(() => const HomePage());
           },
           child: Text(
             'Doofer',
@@ -136,7 +136,7 @@ class _DisplayNoteState extends State<DisplayNote> {
   }
 
   void doEditCard() {
-    Get.to(EditNoteForm(_note))?.then(
+    Get.to(() => EditNoteForm(_note))?.then(
       (updatedNoteID) async {
         if (updatedNoteID != null) {
           // note has been updated, reload it

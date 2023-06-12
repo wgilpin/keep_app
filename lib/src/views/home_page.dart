@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Note newNote = Note();
-          Get.to(EditNoteForm(newNote));
+          Get.to(() => EditNoteForm(newNote));
         },
         child: const Icon(Icons.add),
       ),

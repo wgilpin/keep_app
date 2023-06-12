@@ -41,7 +41,7 @@ class PageNotFound extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => Get.to(LoginPage()),
+              onPressed: () => Get.to(() => LoginPage()),
               child: const Text("Login"),
             )
           ],
