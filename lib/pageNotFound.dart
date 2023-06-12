@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
 
 class PageNotFound extends StatelessWidget {
@@ -41,7 +40,7 @@ class PageNotFound extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => Get.to(LoginPage()),
+              onPressed: () => Get.to(() => LoginPage()),
               child: const Text("Login"),
             )
           ],

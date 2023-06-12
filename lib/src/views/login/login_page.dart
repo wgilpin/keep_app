@@ -101,7 +101,7 @@ class LoginPage extends GetWidget<AuthCtl> {
                     SizedBox(height: 30),
                     TextButton(
                       onPressed: () {
-                        Get.to(RegisterPage());
+                        Get.to(() => RegisterPage());
                       },
                       child: Text('Register', style: TextStyle(decoration: TextDecoration.underline)),
                     ),

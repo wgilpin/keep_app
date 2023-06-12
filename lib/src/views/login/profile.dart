@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
-import 'package:keep_app/src/views/home_page.dart';
 
 class Profile extends StatelessWidget {
   const Profile({super.key});

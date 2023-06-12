@@ -17,11 +17,11 @@ class CardGrid extends StatelessWidget {
   // open the note in a new page when tapped
   onNoteTapped(note) {
     debugPrint("CardGrid.onNoteTapped");
-    Get.to(DisplayNote(
-      note,
-      onChanged: doUpdate,
-      onPinned: onPinned,
-    ));
+    Get.to(() => DisplayNote(
+          note,
+          onChanged: doUpdate,
+          onPinned: onPinned,
+        ));
   }
 
   @override

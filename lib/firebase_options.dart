@@ -52,6 +52,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '516790082055',
     projectId: 'notes-a522f',
     authDomain: 'notes-a522f.firebaseapp.com',
+    databaseURL: 'https://notes-a522f-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'notes-a522f.appspot.com',
     measurementId: 'G-TEHC3SZZX4',
   );
@@ -61,6 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:516790082055:android:77ef5b5d6ab088bacae8a2',
     messagingSenderId: '516790082055',
     projectId: 'notes-a522f',
+    databaseURL: 'https://notes-a522f-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'notes-a522f.appspot.com',
   );
 
@@ -69,6 +71,7 @@ class DefaultFirebaseOptions {
     appId: '1:516790082055:ios:e87c8fe9ede7b0bccae8a2',
     messagingSenderId: '516790082055',
     projectId: 'notes-a522f',
+    databaseURL: 'https://notes-a522f-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'notes-a522f.appspot.com',
     iosClientId: '516790082055-373d6k5uj6e7q17brivhbrm043uujbgu.apps.googleusercontent.com',
     iosBundleId: 'com.example.keepApp',
