@@ -1,10 +1,7 @@
 import {QuerySnapshot, getFirestore, Timestamp} from 'firebase-admin/firestore'
 import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
-import {initializeApp} from 'firebase-admin/app'
 import {getNoteEmbeddings, getNoteSimilarity, getTextEmbedding} from './embeddings_functions'
-
-initializeApp()
 
 const THRESHOLD = 0.2
 const MAX_CACHE_SIZE = 20
