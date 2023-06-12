@@ -132,7 +132,7 @@ function cleanSnippet(text: string): string {
   return text
 }
 
-  type EmbeddingsRecord = { [id: string]: number[][] }
+export type EmbeddingsRecord = { [id: string]: number[][] }
 
 /**
    * check if the note has embeddings
@@ -143,17 +143,10 @@ function hasEmbeddings(snap: DocumentSnapshot): boolean {
   if (!snap.exists) {
     return false
   }
-  if (!snap.data()) {
-    return false
-  }
-  if (snap.data()?.titleVector && snap.data()?.titleVector.length > 0) {
-    return true
-  }
-  if (snap.data()?.snippetVector && snap.data()?.snippetVector.length > 0) {
-    return true
-  }
-  if (snap.data()?.commentVector && snap.data()?.commentVector.length > 0) {
-    return true
+  for (const key of ['titleVector', 'snippetVector', 'commentVector']) {
+    if (snap.data()?.[key] && snap.data()?.[key].length > 0) {
+      return true
+    }
   }
   return false
 }
@@ -169,21 +162,21 @@ export async function getNoteEmbeddings(
   noteSnapshot: QueryDocumentSnapshot
 ): Promise<EmbeddingsRecord> {
   const embeddingsSnap = await getFirestore().collection('embeddings').doc(noteSnapshot.id).get()
-  let titleVector: number[]
-  let commentVector: number[]
-  let snippetVector: number[]
+
   if (hasEmbeddings(embeddingsSnap)) {
-    titleVector = embeddingsSnap.data()?.titleVector
-    snippetVector = embeddingsSnap.data()?.snippetVector
-    commentVector = embeddingsSnap.data()?.commentVector
-  } else {
-    const {title, snippet, comment} = noteSnapshot.data()
-    const vecs = await updateNoteEmbeddings(title, comment, snippet, noteSnapshot.id)
-      ;[titleVector, snippetVector, commentVector] = vecs
+    // return the embeddings
+    return {[noteSnapshot.id]: [
+      embeddingsSnap.data()?.titleVector,
+      embeddingsSnap.data()?.snippetVector,
+      embeddingsSnap.data()?.commentVector,
+    ]}
   }
-  const dict: { [id: string]: number[][] } = {}
-  dict[noteSnapshot.id] = [titleVector, snippetVector, commentVector]
-  return dict
+
+  // no embeddings found, so create them
+  const {title, snippet, comment} = noteSnapshot.data()
+  const [titleVector, snippetVector, commentVector] =
+    await updateNoteEmbeddings(title, comment, snippet, noteSnapshot.id)
+  return {[noteSnapshot.id]: [titleVector, snippetVector, commentVector]}
 }
 
 /**
@@ -206,26 +199,22 @@ export const updateNoteEmbeddings = async (
     return []
   }
 
-  const updates: { [id: string]: number[] } = {}
-
-  if (title) {
-    updates['titleVector'] = await getTextEmbedding(title, false)
-  }
-
-  if (snippet) {
-    const clean = cleanSnippet(snippet)
-    updates['snippetVector'] = await getTextEmbedding(clean, false)
-  }
-
-  if (comment) {
-    updates['commentVector'] = await getTextEmbedding(comment, false)
+  // make the update object of the embeddings, only for fields provided
+  const updates: { [id: string]: number[] } = {
+    ...title.length>0 && {titleVector: await getTextEmbedding(title, false)},
+    ...snippet.length>0 && {snippetVector: await getTextEmbedding(cleanSnippet(snippet), false)},
+    ...title.length>0 && {titleVector: await getTextEmbedding(title, false)},
   }
 
   logger.debug('updateNoteEmbeddings', noteId)
   // write any updates to the db
   await getFirestore().collection('embeddings').doc(noteId).set(updates, {merge: true})
 
-  return [updates['titleVector'], updates['snippetVector'], updates['commentVector']]
+  return [
+    updates['titleVector']??[],
+    updates['snippetVector']??[],
+    updates['commentVector']??[],
+  ]
 }
 
 /**

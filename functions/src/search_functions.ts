@@ -2,7 +2,7 @@ import {QuerySnapshot, getFirestore, Timestamp} from 'firebase-admin/firestore'
 import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
 import {initializeApp} from 'firebase-admin/app'
-import {getNoteEmbeddings, getNoteSimilarity, getTextEmbedding} from './embeddings_functions'
+import {getNoteEmbeddings, getNoteSimilarity, getTextEmbedding, EmbeddingsRecord} from './embeddings_functions'
 
 initializeApp()
 
@@ -152,18 +152,7 @@ async function vecSimilarRanked(
   count = 10,
   threshold = THRESHOLD
 ): Promise<NoteSummary[]> {
-  const promises: Promise<object>[] = []
-  for (const n of notes.docs) {
-    if (n.id != originalId) {
-      promises.push(getNoteEmbeddings(n))
-    }
-  }
-  const vecMaps = await Promise.all(promises)
-  // make a single dict of all the embeddings
-  const vecs: { [id: string]: number[][] } = {}
-  for (const vecMap of vecMaps) {
-    vecs[Object.keys(vecMap)[0]] = Object.values(vecMap)[0]
-  }
+  const vecs: EmbeddingsRecord = await getEmbeddingsForNotes(notes, originalId)
   // vecs is now 3 embeddings for each note
   // we have all the results, now calculate the similarity
   const similarityScores: Record<string, number> = {} // id: score
@@ -171,7 +160,9 @@ async function vecSimilarRanked(
   for (const id in vecs) {
     // for a note with embs 'noteVec', calculate the similarity
     const score = getNoteSimilarity(vecs[id], searchVecs)
-    console.log(`Similarity score : ${score} for ${id} v. ${originalId}`)
+    if (score <0.0000001) {
+      logger.debug(`Similarity score : ${score} for ${id} v. ${originalId}`)
+    }
     if (score > threshold) {
       similarityScores[id] = score
     }
@@ -184,6 +175,7 @@ async function vecSimilarRanked(
   // -> list of ids
   const rankedNotes = sortedScores.slice(0, count).map((score) => score[0])
 
+  // prepare the return value
   const related: NoteSummary[] = []
   for (const id of rankedNotes) {
     const title = notes.docs.find((n) => n.id == id)?.data().title ?? ''
@@ -333,4 +325,26 @@ export const noteSearch = onCall(async (req) => {
   return doNoteSearch(noteId, maxResults, uid, threshold)
 })
 
+
+/**
+ * get the embeddings for a list of notes
+ * @param {DocumentSnapshot} notes the snapshot of the notes
+ * @param {string} originalId the id of the note to exclude from the results
+ * @return {object} the embeddings for the notes
+ **/
+async function getEmbeddingsForNotes(notes: QuerySnapshot<FirebaseFirestore.DocumentData>, originalId: string | null) {
+  const promises: Promise<object>[] = []
+  for (const n of notes.docs) {
+    if (n.id != originalId) {
+      promises.push(getNoteEmbeddings(n))
+    }
+  }
+  const vecMaps = await Promise.all(promises)
+  // make a single dict of all the embeddings
+  const vecs: EmbeddingsRecord = {}
+  for (const vecMap of vecMaps) {
+    vecs[Object.keys(vecMap)[0]] = Object.values(vecMap)[0]
+  }
+  return vecs
+}
 
