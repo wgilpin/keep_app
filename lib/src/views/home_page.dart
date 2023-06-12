@@ -7,7 +7,6 @@ import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/card_grid.dart';
 import 'package:keep_app/src/views/edit.dart';
-import 'package:keep_app/src/views/login/profile.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
 class HomePage extends StatefulWidget {

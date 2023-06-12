@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
 
 class PageNotFound extends StatelessWidget {
