@@ -19,3 +19,5 @@ import {getNoteEmbeddings, updateNoteEmbeddings} from './embeddings_functions'
 export {getNoteEmbeddings, updateNoteEmbeddings}
 
 export {doNoteSearch, doTextSearch}
+
+
