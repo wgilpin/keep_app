@@ -24,7 +24,6 @@ import 'src/views/root.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    name: "Doofer",
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // crashlytics
