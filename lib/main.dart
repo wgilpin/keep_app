@@ -2,20 +2,21 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:device_preview/device_preview.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/pageNotFound.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/display_shared_note.dart';
 import 'package:keep_app/src/views/edit.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'firebase_options.dart';
-import 'package:flutter/material.dart';
 
+import 'firebase_options.dart';
 import 'src/controllers/bindings/app_binding.dart';
 import 'src/theme.dart';
 import 'src/views/root.dart';
@@ -59,7 +60,12 @@ Future<void> main() async {
     debugPrint('Using remote Firestore');
   }
 
-  runApp(const MyApp());
+  runApp(
+    DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (context) => const MyApp(), // Wrap your app
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -117,12 +123,15 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     Get.changeTheme(makeTheme());
     return GetMaterialApp(
+      useInheritedMediaQuery: true,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       title: 'Doofer',
       initialBinding: AppBindings(),
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),
       // static routes
-      routes: {},
+      routes: const {},
       onGenerateRoute: generateRoute,
       onUnknownRoute: (settings) {
         return MaterialPageRoute(builder: (_) => const PageNotFound());
