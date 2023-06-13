@@ -2,13 +2,13 @@
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable require-jsdoc */
-const {doNoteSearch} = require('../lib/index.js')
+const {doNoteSearch, doTextSearch} = require('../lib/index.js')
 
 // **********************************************************************************
 
-// doTextSearch("flutter", 10, "zdt3YB86kJaxsESbMmkblkqQ3093").then(res => {
-//   console.log(res);
-// });
+doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').then((res) => {
+  console.log(res)
+})
 
 // **********************************************************************************
 
