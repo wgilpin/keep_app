@@ -6,7 +6,7 @@ import 'package:keep_app/src/controllers/note_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/card_grid.dart';
-import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/edit_page.dart';
 import 'package:keep_app/src/views/left_navigation.dart';
 import 'package:keep_app/src/views/recommend.dart';
 

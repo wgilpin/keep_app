@@ -14,6 +14,8 @@ class Note {
   List<CheckItem> checklist = [];
   bool isShared = false;
   Timestamp? relatedUpdated;
+  Timestamp? lockedTime;
+  String? lockedBy; // user id of user who locked the note
 
   Note();
 
@@ -45,6 +47,8 @@ class Note {
         }
       }
       relatedUpdated = snapshot.data()['relatedUpdated'];
+      lockedTime = snapshot.data()['lockedTime'];
+      lockedBy = snapshot.data()['lockedBy'];
     } on Exception catch (e) {
       debugPrint('Failed to create note from snapshot: $e');
     }
@@ -58,6 +62,7 @@ class Note {
       if (url != null) "url": url,
       if (user != null) "user": user,
       if (created != null) "created": created,
+      if (lockedBy != null) "lockedBy": lockedBy, // user id of user who locked the note
       'shared': isShared,
       "isPinned": isPinned,
     };

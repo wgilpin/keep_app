@@ -13,7 +13,7 @@ import 'package:get/get.dart';
 import 'package:keep_app/pageNotFound.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/display_shared_note.dart';
-import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/edit_page.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'firebase_options.dart';

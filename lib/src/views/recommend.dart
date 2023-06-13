@@ -33,7 +33,7 @@ class Recommender {
     try {
       final uid = Get.find<AuthCtl>().user!.uid;
       final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final lastUpdated = (userSnap.data()!['lastUpdated'] ?? 0) as Timestamp;
+      final lastUpdated = Timestamp.fromMillisecondsSinceEpoch(userSnap.data()!['lastUpdated'] ?? 0);
       final relatedUpdated =
           note.relatedUpdated == null ? Timestamp.fromMicrosecondsSinceEpoch(0) : note.relatedUpdated as Timestamp;
       if (note.related != null && note.related!.isNotEmpty) {

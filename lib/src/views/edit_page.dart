@@ -1,14 +1,14 @@
-// ignore: unused_import
-
-import 'platform_plugin_stub.dart'
-    if (dart.library.io) 'platform_plugin_io.dart'
-    if (dart.library.html) 'platform_plugin_web.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/notes.dart';
+
+// ignore: unused_import
+
+import 'platform_plugin_stub.dart'
+    if (dart.library.io) 'platform_plugin_io.dart'
+    if (dart.library.html) 'platform_plugin_web.dart';
 
 class EditNoteForm extends StatefulWidget {
   final Note? _note;
@@ -52,7 +52,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
     _urlCtl.text = widget.url ?? _urlCtl.text;
   }
 
-  void _saveNoteToFirebase(Map<String, Object> note) async {
+  void _saveNoteToFirebase(Map<String, Object?> note) async {
     // if note has the key "id", add 1
     // else add the note
 
@@ -63,6 +63,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
 
       // remove the id from the note, as firebase uses it as a doc reference
       note.remove("id");
+
+      // we are saving so nullify the lockedBy field
+      note["lockedBy"] = null;
+      note["lockedTime"] = null;
       note = cleanFields(note);
       await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
     } else {
@@ -82,7 +86,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
 
   /// Clean up the fields before saving
   /// - remove any one-line comment/snippet with just a <br/>
-  Map<String, Object> cleanFields(Map<String, Object> note) {
+  Map<String, Object?> cleanFields(Map<String, Object?> note) {
     if (note["snippet"] == "<br/>") {
       note["snippet"] = "";
     }
@@ -135,6 +139,15 @@ class _EditNoteFormState extends State<EditNoteForm> {
           style: TextStyle(fontSize: 16),
         ),
         automaticallyImplyLeading: (widget._note != null) || !widget.showBack,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back), // Change this icon to your custom icon
+          onPressed: () {
+            // Put your custom function here
+            onBackButton();
+            Navigator.of(context)
+                .pop(); // Optional. This line will navigate back, you can remove this line if you don't want to navigate back immediately.
+          },
+        ),
         actions: <Widget>[
           IconButton(
             color: Colors.brown[600],
@@ -226,6 +239,16 @@ class _EditNoteFormState extends State<EditNoteForm> {
         'url': _urlCtl.text
       });
       platformPluginMethod();
+    }
+  }
+
+  Future<void> onBackButton() async {
+    // clear the lock on the note, if present. No need to wait for async
+    if (widget._note != null) {
+      FirebaseFirestore.instance.collection('notes').doc(widget._note!.id).update({
+        "lockedBy": null,
+        "lockedTime": null,
+      });
     }
   }
 }

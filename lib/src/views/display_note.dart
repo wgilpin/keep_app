@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/notes.dart';
-import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/edit_page.dart';
 import 'package:keep_app/src/views/home_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
 import 'package:keep_app/src/views/recommend.dart';
@@ -135,7 +136,29 @@ class _DisplayNoteState extends State<DisplayNote> {
     );
   }
 
-  void doEditCard() {
+  Future<void> doEditCard() async {
+    //  if the note is locked by another user, can't edit it
+    final uid = Get.find<AuthCtl>().user!.uid;
+    final DateTime now = DateTime.now().toUtc();
+    if (_note.lockedBy != null) {
+      // get current user
+      // if locked by me, fine. If someone else, can't edit until saved or 1 hour has passed
+      if (_note.lockedBy != uid) {
+        // is lockedTime more than 1 hour ago?
+        final diff = now.difference(_note.lockedTime!.toDate());
+        if (diff.inHours < 1) {
+          // less than 1 hour, can't edit
+          Get.snackbar('Note locked', 'Locked by another for at most another ${diff.inMinutes} minutes ');
+          return;
+        }
+      }
+      //  we can edit. Lock it for current user
+      debugPrint('DisplayNote.doEditCard Locked ${_note.id}');
+    }
+    await FirebaseFirestore.instance.collection('notes').doc(_note.id).update({
+      'lockedBy': uid,
+      'lockedTime': Timestamp.fromDate(now),
+    });
     Get.to(() => EditNoteForm(_note))?.then(
       (updatedNoteID) async {
         if (updatedNoteID != null) {
@@ -147,7 +170,7 @@ class _DisplayNoteState extends State<DisplayNote> {
             },
           );
           // if the parent widget supplied a callback, call it
-          print("DisplayNote.onPressed");
+          debugPrint("DisplayNote.onPressed");
           widget.onChanged?.call();
         }
       },
