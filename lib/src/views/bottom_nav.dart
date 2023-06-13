@@ -33,7 +33,7 @@ class BottomNav extends StatelessWidget {
       onTap: (index) {
         switch (index) {
           case 1:
-            Get.to(() => const Profile());
+            Get.to(() => const ProfilePage());
             break;
           default:
             Get.to(() => const HomePage());

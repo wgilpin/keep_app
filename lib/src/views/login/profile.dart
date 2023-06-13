@@ -5,12 +5,16 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
+import 'package:keep_app/src/views/left_navigation.dart';
 
-class Profile extends StatelessWidget {
-  const Profile({super.key});
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    MediaQueryData media = MediaQuery.of(context);
+    final isWide = media.size.width > 800;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -21,31 +25,38 @@ class Profile extends StatelessWidget {
           ),
         ),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            const Padding(
-              padding: EdgeInsets.only(top: 20.0),
-              child: Text(
-                'Profile',
-                style: TextStyle(fontSize: 24),
+      body: Row(
+        children: [
+          if (isWide) const LeftNavigation(1),
+          Expanded(
+            child: Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 20.0),
+                    child: Text(
+                      'Profile',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  ElevatedButton(
+                      onPressed: () => doPassword(context),
+                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      child: const Text('Change Password')),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                      onPressed: doLogout,
+                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      child: const Text('Logout')),
+                ],
               ),
             ),
-            const SizedBox(height: 50),
-            ElevatedButton(
-                onPressed: () => doPassword(context),
-                style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
-                child: const Text('Change Password')),
-            const SizedBox(height: 30),
-            ElevatedButton(
-                onPressed: doLogout,
-                style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
-                child: const Text('Logout')),
-          ],
-        ),
+          ),
+        ],
       ),
-      bottomNavigationBar: BottomNav(1),
+      bottomNavigationBar: !isWide ? BottomNav(1) : null,
     );
   }
 

@@ -7,6 +7,8 @@ import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/card_grid.dart';
 import 'package:keep_app/src/views/edit.dart';
+import 'package:keep_app/src/views/left_navigation.dart';
+import 'package:keep_app/src/views/login/profile.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
 class HomePage extends StatefulWidget {
@@ -47,6 +49,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    MediaQueryData media = MediaQuery.of(context);
+    final isWide = media.size.width > 800;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -99,7 +103,12 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : (_searchController.text.isEmpty ? getStreamGrid() : getFutureGrid()),
+            : Row(
+                children: [
+                  if (isWide) const LeftNavigation(0),
+                  Expanded(child: (_searchController.text.isEmpty ? getStreamGrid() : getFutureGrid())),
+                ],
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -108,7 +117,7 @@ class _HomePageState extends State<HomePage> {
         },
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: const BottomNav(0),
+      bottomNavigationBar: !isWide ? const BottomNav(0) : null,
     );
   }
 
