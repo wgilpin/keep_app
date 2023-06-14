@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/left_navigation.dart';
+import 'package:keep_app/src/views/login/login_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -60,8 +61,9 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void doLogout() {
-    Get.find<AuthCtl>().auth.signOut();
+  Future<void> doLogout() async {
+    await Get.find<AuthCtl>().auth.signOut();
+    Get.to(() => LoginPage());
   }
 
   void doPassword(context) {

@@ -132,22 +132,26 @@ class _EditNoteFormState extends State<EditNoteForm> {
 
   @override
   Widget build(BuildContext context) {
+    // show back button if we are editing an existing note, or if the showBack flag is set
+    bool showLeading = (widget._note != null) || widget.showBack;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Edit Note',
           style: TextStyle(fontSize: 16),
         ),
-        automaticallyImplyLeading: (widget._note != null) || !widget.showBack,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back), // Change this icon to your custom icon
-          onPressed: () {
-            // Put your custom function here
-            onBackButton();
-            Navigator.of(context)
-                .pop(); // Optional. This line will navigate back, you can remove this line if you don't want to navigate back immediately.
-          },
-        ),
+        automaticallyImplyLeading: showLeading,
+        leading: showLeading
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back), // Change this icon to your custom icon
+                onPressed: () {
+                  // Put your custom function here
+                  onBackButton();
+                  Navigator.of(context)
+                      .pop(); // Optional. This line will navigate back, you can remove this line if you don't want to navigate back immediately.
+                },
+              )
+            : null,
         actions: <Widget>[
           IconButton(
             color: Colors.brown[600],

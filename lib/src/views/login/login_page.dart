@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/views/edit_page.dart';
 import 'package:keep_app/src/views/home_page.dart';
 
 import 'register_page.dart';
@@ -14,7 +15,9 @@ class LoginPage extends GetWidget<AuthCtl> {
   final TextEditingController emailCtl = TextEditingController();
   final TextEditingController passwordCtl = TextEditingController();
 
-  LoginPage({super.key});
+  Map<String, String>? editArgs;
+
+  LoginPage({this.editArgs, super.key});
 
   void showSnack(text) => Get.snackbar('Error', text,
       icon: Icon(
@@ -43,8 +46,22 @@ class LoginPage extends GetWidget<AuthCtl> {
     }
     await controller.login(emailCtl.text, passwordCtl.text);
     if (controller.user != null) {
-      Get.offAll(HomePage());
+      if (editArgs == null) {
+        // logged in and no edit args
+        Get.offAll(HomePage());
+      } else {
+        // logged in and edit args present so go to edit page
+        Get.offAll(EditNoteForm(
+          null,
+          title: editArgs?["title"],
+          snippet: editArgs?["snippet"],
+          comment: editArgs?["comment"],
+          url: editArgs?["url"],
+          showBack: false,
+        ));
+      }
     } else {
+      // not logg
       Get.offAll(LoginPage());
     }
   }
