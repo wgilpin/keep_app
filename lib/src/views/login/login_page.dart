@@ -15,7 +15,7 @@ class LoginPage extends GetWidget<AuthCtl> {
   final TextEditingController emailCtl = TextEditingController();
   final TextEditingController passwordCtl = TextEditingController();
 
-  Map<String, String>? editArgs;
+  final Map<String, String>? editArgs;
 
   LoginPage({this.editArgs, super.key});
 

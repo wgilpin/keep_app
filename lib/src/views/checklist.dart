@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:keep_app/src/notes.dart';
 
 class CheckList extends StatefulWidget {
-  const CheckList({super.key, this.onChanged, required this.note, required this.showChecked});
+  final bool showComment;
+
+  const CheckList({super.key, this.onChanged, required this.note, required this.showChecked, this.showComment = true});
   final Function()? onChanged;
   final Note note;
   final bool showChecked;
@@ -49,7 +51,7 @@ class _CheckListState extends State<CheckList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.note.comment != null && widget.note.comment!.isNotEmpty)
+        if (widget.showComment && widget.note.comment != null && widget.note.comment!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -65,13 +67,14 @@ class _CheckListState extends State<CheckList> {
               child: Column(children: [
                 getChecklist(_unchecked, widget.showChecked),
                 if (widget.showChecked) showEditBox(),
-                if (widget.showChecked)
+                if (widget.showChecked && _checked.isNotEmpty)
                   const Divider(
                     height: 8,
                     thickness: 2,
                   ),
                 if (widget.showChecked) getChecklist(_checked, true),
               ])),
+        if (widget.note.checklist.isEmpty) showEditBox(),
       ],
     );
   }
@@ -94,6 +97,11 @@ class _CheckListState extends State<CheckList> {
       itemCount: list.length,
       itemBuilder: (context, index) {
         final item = list[index];
+        // if (list.length == 1 && item.title != null && item.title!.isEmpty) {
+        //   return SizedBox.shrink(
+        //     key: item.key,
+        //   );
+        // }
         return LabeledCheckbox(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
           key: item.key,
@@ -147,25 +155,23 @@ class _CheckListState extends State<CheckList> {
   }
 
   showEditBox() {
-    return Row(
+    return Stack(
       children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: TextField(
-              focusNode: inputFocusNode,
-              controller: _itemTitleCtl,
-              decoration: InputDecoration(
-                labelText: 'Add or edit an item',
-                fillColor: Colors.yellow[200],
-              ),
-              onSubmitted: (_) => doSavePressed(),
-            ),
+        TextField(
+          focusNode: inputFocusNode,
+          controller: _itemTitleCtl,
+          decoration: InputDecoration(
+            labelText: 'Add or edit a checklist item',
+            fillColor: Colors.yellow[200],
           ),
+          onSubmitted: (_) => doSavePressed(),
         ),
-        IconButton(
-          icon: const Icon(Icons.save),
-          onPressed: doSavePressed,
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: doSavePressed,
+          ),
         ),
       ],
     );
@@ -201,11 +207,12 @@ class _CheckListState extends State<CheckList> {
     setState(() {
       widget.note.checklist.remove(item);
       _itemTitleCtl.text = "";
+      _editingItem = null;
     });
     // set up the checked and unchecked lists
     splitChecklist();
     // save the checklist to the server
-    saveChecklist().then(() => widget.onChanged?.call());
+    saveChecklist().then((_) => widget.onChanged?.call());
   }
 }
 

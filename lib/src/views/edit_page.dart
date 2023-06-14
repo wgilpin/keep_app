@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/views/checklist.dart';
 
 // ignore: unused_import
 
@@ -11,19 +12,22 @@ import 'platform_plugin_stub.dart'
     if (dart.library.html) 'platform_plugin_web.dart';
 
 class EditNoteForm extends StatefulWidget {
-  final Note? _note;
+  final Note? _initialNote;
   final String? title;
   final String? snippet;
   final String? comment;
   final String? url;
   final bool showBack;
+  final Function()? onChanged;
 
   /// EditNoteForm constructor
   ///
   /// If the note is not null, then we are editing an existing note.
   /// If the note is null, then we are creating a new note.
   /// If you supply title / comment / snippet / url they will be used as the default values in the form.
-  const EditNoteForm(this._note, {this.title, this.comment, this.snippet, this.url, this.showBack = false, super.key});
+  const EditNoteForm(note,
+      {this.title, this.comment, this.snippet, this.url, this.showBack = false, this.onChanged, super.key})
+      : _initialNote = note;
 
   @override
   State<EditNoteForm> createState() => _EditNoteFormState();
@@ -35,21 +39,26 @@ class _EditNoteFormState extends State<EditNoteForm> {
   late TextEditingController _commentCtl;
   late TextEditingController _snippetCtl;
   late TextEditingController _urlCtl;
+  late Note _note;
+  late bool _showChecklist;
 
   @override
   void initState() {
     super.initState();
+    _note = widget._initialNote == null ? Note() : widget._initialNote!;
     // if we are editing an existing note, then populate the form with the existing values
-    _titleCtl = TextEditingController(text: widget._note?.title);
-    _commentCtl = TextEditingController(text: widget._note?.comment);
-    _snippetCtl = TextEditingController(text: widget._note?.snippet);
-    _urlCtl = TextEditingController(text: widget._note?.url);
+    _titleCtl = TextEditingController(text: _note.title);
+    _commentCtl = TextEditingController(text: _note.comment);
+    _snippetCtl = TextEditingController(text: _note.snippet);
+    _urlCtl = TextEditingController(text: _note.url);
 
     // if we are creating a new note, then populate the form with the supplied values
     _titleCtl.text = widget.title ?? _titleCtl.text;
     _commentCtl.text = widget.comment ?? _commentCtl.text;
     _snippetCtl.text = widget.snippet ?? _snippetCtl.text;
     _urlCtl.text = widget.url ?? _urlCtl.text;
+
+    _showChecklist = _note.checklist.isNotEmpty;
   }
 
   void _saveNoteToFirebase(Map<String, Object?> note) async {
@@ -133,7 +142,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
   @override
   Widget build(BuildContext context) {
     // show back button if we are editing an existing note, or if the showBack flag is set
-    bool showLeading = (widget._note != null) || widget.showBack;
+    bool showLeading = (_note.id != null) || widget.showBack;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -168,17 +177,49 @@ class _EditNoteFormState extends State<EditNoteForm> {
           constraints: const BoxConstraints(maxHeight: 800),
           child: Column(
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  controller: _titleCtl,
-                  decoration: InputDecoration(
-                    hintText: 'A title for the note',
-                    labelText: 'Title',
-                    fillColor: Colors.yellow[50],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextFormField(
+                        controller: _titleCtl,
+                        decoration: InputDecoration(
+                          hintText: 'A title for the note',
+                          labelText: 'Title',
+                          fillColor: Colors.yellow[50],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // only show the add checklist button if there is no checklist
+                  if (_note.checklist.isEmpty && !_showChecklist)
+                    Tooltip(
+                      message: 'Add a checklist item',
+                      child: IconButton(
+                        onPressed: doAddCheck,
+                        icon: const Icon(Icons.add_box_outlined),
+                      ),
+                    ),
+                ],
+              ),
+              if (_note.id != null && (_note.checklist.isNotEmpty || _showChecklist))
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    color: Colors.yellow[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CheckList(
+                        note: _note,
+                        showChecked: true,
+                        onChanged: doChangeCheck,
+                        showComment: false,
+                      ),
+                    ),
                   ),
                 ),
-              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -236,7 +277,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
     if (_formKey.currentState!.validate()) {
       final htmlSnippet = replaceNewlinesWithBreaks(_snippetCtl.text);
       _saveNoteToFirebase({
-        if (widget._note?.id != null) 'id': widget._note!.id!,
+        if (_note.id != null) 'id': _note.id!,
         'title': _titleCtl.text,
         'comment': _commentCtl.text,
         'snippet': htmlSnippet,
@@ -248,11 +289,22 @@ class _EditNoteFormState extends State<EditNoteForm> {
 
   Future<void> onBackButton() async {
     // clear the lock on the note, if present. No need to wait for async
-    if (widget._note != null) {
-      FirebaseFirestore.instance.collection('notes').doc(widget._note!.id).update({
+    if (_note.id != null) {
+      FirebaseFirestore.instance.collection('notes').doc(_note.id).update({
         "lockedBy": null,
         "lockedTime": null,
       });
     }
+  }
+
+  void doAddCheck() {
+    setState(() {
+      _showChecklist = true;
+    });
+  }
+
+  doChangeCheck() {
+    // notify parent
+    widget.onChanged?.call();
   }
 }

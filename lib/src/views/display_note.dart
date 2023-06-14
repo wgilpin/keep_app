@@ -159,7 +159,10 @@ class _DisplayNoteState extends State<DisplayNote> {
       'lockedBy': uid,
       'lockedTime': Timestamp.fromDate(now),
     });
-    Get.to(() => EditNoteForm(_note))?.then(
+    Get.to(() => EditNoteForm(
+          _note,
+          onChanged: doChanged,
+        ))?.then(
       (updatedNoteID) async {
         if (updatedNoteID != null) {
           // note has been updated, reload it
@@ -301,7 +304,7 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doChanged() {
     debugPrint('DisplayNote.doChanged');
-
+    setState(() {});
     widget.onChanged?.call();
   }
 
