@@ -95,13 +95,14 @@ class _DisplayNoteState extends State<DisplayNote> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Tooltip(
-                  message: 'Add a checklist item',
-                  child: IconButton(
-                    onPressed: doAddCheck,
-                    icon: const Icon(Icons.add_box_outlined),
+                if (!hasChecklist)
+                  Tooltip(
+                    message: 'Add a checklist item',
+                    child: IconButton(
+                      onPressed: doAddCheck,
+                      icon: const Icon(Icons.add_box_outlined),
+                    ),
                   ),
-                ),
                 Tooltip(
                   message: _note.isShared ? 'Stop sharingthis note' : 'Share this note',
                   child: IconButton(
@@ -304,7 +305,9 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doChanged() {
     debugPrint('DisplayNote.doChanged');
-    setState(() {});
+    setState(() {
+      hasChecklist = _note.checklist.isNotEmpty;
+    });
     widget.onChanged?.call();
   }
 
