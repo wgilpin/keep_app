@@ -19,7 +19,7 @@ class Recommender {
         return {};
       }
       Map<String, String> res = {};
-      for (const entry in results.data) {
+      for (var entry in results.data) {
         res[entry["id"]] = entry["title"];
       }
       return res;

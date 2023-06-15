@@ -157,7 +157,7 @@ async function vecSimilarRanked(
   for (const id in vecs) {
     // for a note with embs 'noteVec', calculate the similarity
     const score = getNoteSimilarity(vecs[id], searchVecs)
-    if (score <0.0000001) {
+    if (Math.abs(score) <0.0000001) {
       logger.debug(`Similarity score : ${score} for ${id} v. ${originalId}`)
     }
     if (score > threshold) {

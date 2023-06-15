@@ -17,19 +17,24 @@ let ApiKey: string | null = null
  */
 async function getSecretKey(keyName: string): Promise<string | null> {
   let retries = 3
+  const name = `projects/516790082055/secrets/${keyName}`
   while (retries > 0) {
+    let res
     try {
+      res = null
       if (ApiKey) {
         return ApiKey
       }
-
       const client = new SecretManagerServiceClient()
-      const name = `projects/516790082055/secrets/${keyName}`
-      const res = await client.accessSecretVersion({name})
+      res = await client.accessSecretVersion({name})
       ApiKey = res[0]?.payload?.data?.toString() ?? null
       return ApiKey
     } catch (error) {
-      logger.error('key service error ', keyName, {error})
+      if (res) {
+        logger.error('key service error in result ', name, {res})
+      } else {
+        logger.error('key service error calling ', name, {error})
+      }
       retries--
       return null
     }

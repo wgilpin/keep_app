@@ -6,7 +6,7 @@ const {doNoteSearch, doTextSearch} = require('../lib/index.js')
 
 // **********************************************************************************
 
-doTextSearch('flutter', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').then((res) => {
+doTextSearch('easy no-code development', 10, 'zdt3YB86kJaxsESbMmkblkqQ3093').then((res) => {
   console.log(res)
 })
 
