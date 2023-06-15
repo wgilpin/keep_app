@@ -57,7 +57,7 @@ class LoginPage extends GetWidget<AuthCtl> {
           snippet: editArgs?["snippet"],
           comment: editArgs?["comment"],
           url: editArgs?["url"],
-          showBack: false,
+          iFrame: true,
         ));
       }
     } else {

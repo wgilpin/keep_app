@@ -19,9 +19,9 @@ class Recommender {
         return {};
       }
       Map<String, String> res = {};
-      results.data.forEach((key, value) {
-        res[key] = value;
-      });
+      for (const entry in results.data) {
+        res[entry["id"]] = entry["title"];
+      }
       return res;
     } on FirebaseFunctionsException catch (e) {
       debugPrint('noteSearch Failed to call textSearch: ${e.message}');

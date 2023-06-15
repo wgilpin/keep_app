@@ -159,7 +159,7 @@ class _MyAppState extends State<MyApp> {
                 snippet: args["snippet"],
                 comment: args["comment"],
                 url: args["url"],
-                showBack: false,
+                iFrame: true,
               ));
     }
     if ((settings.name ?? "").startsWith('/share?')) {

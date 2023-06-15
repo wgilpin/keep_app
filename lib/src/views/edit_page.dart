@@ -17,7 +17,7 @@ class EditNoteForm extends StatefulWidget {
   final String? snippet;
   final String? comment;
   final String? url;
-  final bool showBack;
+  final bool iFrame;
   final Function()? onChanged;
 
   /// EditNoteForm constructor
@@ -26,7 +26,7 @@ class EditNoteForm extends StatefulWidget {
   /// If the note is null, then we are creating a new note.
   /// If you supply title / comment / snippet / url they will be used as the default values in the form.
   const EditNoteForm(note,
-      {this.title, this.comment, this.snippet, this.url, this.showBack = false, this.onChanged, super.key})
+      {this.title, this.comment, this.snippet, this.url, this.iFrame = false, this.onChanged, super.key})
       : _initialNote = note;
 
   @override
@@ -142,7 +142,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
   @override
   Widget build(BuildContext context) {
     // show back button if we are editing an existing note, or if the showBack flag is set
-    bool showLeading = (_note.id != null) || widget.showBack;
+    bool showLeading = (_note.id != null) || !widget.iFrame;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -193,10 +193,10 @@ class _EditNoteFormState extends State<EditNoteForm> {
                       ),
                     ),
                   ),
-                  // only show the add checklist button if there is no checklist
-                  if (_note.checklist.isEmpty && !_showChecklist)
+                  // only show the add checklist button if there is no checklist. Never show in iFrame
+                  if (_note.checklist.isEmpty && !_showChecklist && !widget.iFrame)
                     Tooltip(
-                      message: 'Add a checklist item',
+                      message: 'Add a checklist',
                       child: IconButton(
                         onPressed: doAddCheck,
                         icon: const Icon(Icons.add_box_outlined),
