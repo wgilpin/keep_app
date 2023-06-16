@@ -48,8 +48,9 @@ class NoteCard extends StatefulWidget {
   final Function()? onChanged; // called when the note is changed
   late final bool
       interactable; // respond to taps on checklist or image - set to true for full view, false for grid view
-  late final showPin; // show the pin icon - not shown on shared notes
+  late final bool showPin; // show the pin icon - not shown on shared notes
 
+  // ignore: prefer_const_constructors_in_immutables
   NoteCard(this._note,
       {this.onTapped,
       this.onPinned,
@@ -194,7 +195,7 @@ class _NoteCardState extends State<NoteCard> {
 
     // if on web a small screen width suggests mobile
     double width = MediaQuery.of(context).size.width;
-    return width < 450;
+    return width > 450;
   }
 
   heroImage(canOpenVideo) {
