@@ -33,7 +33,14 @@ class Recommender {
     try {
       final uid = Get.find<AuthCtl>().user!.uid;
       final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final lastUpdated = Timestamp.fromMillisecondsSinceEpoch(userSnap.data()!['lastUpdated'] ?? 0);
+      late Timestamp lastUpdated;
+      final data = userSnap.data();
+      if (data != null && data.containsKey('lastUpdated')) {
+        lastUpdated = data['lastUpdated'];
+      } else {
+        // set to epoch 0
+        lastUpdated = Timestamp.fromMicrosecondsSinceEpoch(0);
+      }
       final relatedUpdated =
           note.relatedUpdated == null ? Timestamp.fromMicrosecondsSinceEpoch(0) : note.relatedUpdated as Timestamp;
       if (note.related != null && note.related!.isNotEmpty) {
@@ -46,8 +53,7 @@ class Recommender {
 
       final functions = FirebaseFunctions.instance;
       final callable = functions.httpsCallable('noteSearch');
-      final data = {"noteId": note.id, "maxResults": count};
-      final results = await callable.call(data);
+      final results = await callable.call({"noteId": note.id, "maxResults": count});
       if (results.data == null) {
         return [];
       }
