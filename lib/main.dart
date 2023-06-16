@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -54,10 +53,7 @@ Future<void> main() async {
   };
   print('App started');
   runApp(
-    DevicePreview(
-      enabled: !kReleaseMode,
-      builder: (context) => const MyApp(), // Wrap your app
-    ),
+    const MyApp(), // Wrap your app
   );
 }
 
@@ -116,9 +112,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     Get.changeTheme(makeTheme());
     return GetMaterialApp(
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
       title: 'Doofer',
       initialBinding: AppBindings(),
       theme: makeTheme(),

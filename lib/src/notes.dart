@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:keep_app/src/controllers/auth_controller.dart';
 
 class Note {
   String? id;
@@ -19,7 +21,7 @@ class Note {
 
   Note();
 
-  Note.fromSnapshot(snapshot) {
+  Note.fromSnapshot(snapshot, {bool includeRelated = false}) {
     try {
       try {
         id = snapshot.id;
@@ -46,7 +48,9 @@ class Note {
               .add(CheckItem(index: item["index"], title: item['title'], checked: item['checked'], key: item["key"]));
         }
       }
-      relatedUpdated = snapshot.data()['relatedUpdated'];
+      if (includeRelated) {
+        relatedUpdated = snapshot.data()['relatedUpdated'];
+      }
       lockedTime = snapshot.data()['lockedTime'];
       lockedBy = snapshot.data()['lockedBy'];
     } on Exception catch (e) {
@@ -100,4 +104,16 @@ class CheckItem {
 Future<Note> getNote(id) async {
   final doc = await FirebaseFirestore.instance.collection('notes').doc(id).get();
   return Note.fromSnapshot(doc);
+}
+
+Future<List<Note>> getAllNotes() async {
+  // const userRef = getFirestore().collection('users').doc(uid)
+  // const res = await getFirestore().collection('notes').where('user', '==', userRef).get()
+  String? uid = Get.find<AuthCtl>().user?.uid;
+  if (uid == null) {
+    return [];
+  }
+  final db = FirebaseFirestore.instance;
+  final snap = await db.collection('notes').where("user", isEqualTo: db.doc("/users/$uid")).get();
+  return snap.docs.map((doc) => Note.fromSnapshot(doc, includeRelated: false)).toList();
 }

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/left_navigation.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
+import 'package:to_csv/to_csv.dart' as export_CSV;
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -51,6 +53,11 @@ class ProfilePage extends StatelessWidget {
                       onPressed: doLogout,
                       style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
                       child: const Text('Logout')),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                      onPressed: doDownload,
+                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      child: const Text('Download my data')),
                 ],
               ),
             ),
@@ -118,5 +125,27 @@ class ProfilePage extends StatelessWidget {
     Get.back();
     Get.snackbar("Check your inbox", "If that email matches your login email, you will receive a password reset link.",
         snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 5));
+  }
+
+  Future<void> doDownload() async {
+    try {
+      List<Note> notes = await getAllNotes();
+      List<List<String>> res;
+      res = notes
+          .map((n) => [
+                n.id ?? "",
+                n.title ?? "",
+                n.comment ?? "",
+                n.snippet ?? "",
+                n.url ?? "",
+                n.created.toString(),
+              ])
+          .toList();
+      export_CSV.myCSV(["ID", "Title", "Comment", "Snippet", "URL", "Created"], res);
+      Get.snackbar("Downloading", "Check your downloads folder");
+    } on Exception catch (e) {
+      Get.snackbar("Error preparing data", e.toString(),
+          duration: const Duration(seconds: 5), snackPosition: SnackPosition.BOTTOM);
+    }
   }
 }
