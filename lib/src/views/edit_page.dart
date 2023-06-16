@@ -204,7 +204,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
                     ),
                 ],
               ),
-              if (_note.id != null && (_note.checklist.isNotEmpty || _showChecklist))
+              if ((_note.id != null && _note.checklist.isNotEmpty) || _showChecklist)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
