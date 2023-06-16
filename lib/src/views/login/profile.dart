@@ -128,6 +128,7 @@ class ProfilePage extends StatelessWidget {
   }
 
   Future<void> doDownload() async {
+    // TODO: test on mobile
     try {
       List<Note> notes = await getAllNotes();
       List<List<String>> res;
