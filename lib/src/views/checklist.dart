@@ -73,6 +73,16 @@ class _CheckListState extends State<CheckList> {
                     thickness: 2,
                   ),
                 if (widget.showChecked) getChecklist(_checked, true),
+                if (!widget.showChecked && _checked.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '+ ${_checked.length} checked items',
+                        style: const TextStyle(color: Colors.brown),
+                      ),
+                    ],
+                  )
               ])),
         if (widget.note.checklist.isEmpty) showEditBox(),
       ],
