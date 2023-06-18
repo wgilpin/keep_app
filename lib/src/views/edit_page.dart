@@ -61,38 +61,6 @@ class _EditNoteFormState extends State<EditNoteForm> {
     _showChecklist = _note.checklist.isNotEmpty;
   }
 
-  void _saveNoteToFirebase(Map<String, Object?> note) async {
-    // if note has the key "id", add 1
-    // else add the note
-
-    late String id;
-    if (note.containsKey("id")) {
-      // update existing note
-      id = note["id"].toString();
-
-      // remove the id from the note, as firebase uses it as a doc reference
-      note.remove("id");
-
-      // we are saving so nullify the lockedBy field
-      note["lockedBy"] = null;
-      note["lockedTime"] = null;
-      note = cleanFields(note);
-      await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
-    } else {
-      // add new note
-      final uid = Get.find<AuthCtl>().user!.uid;
-      note = cleanFields(note);
-
-      // add in the user(owner) and created fields
-      note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
-      note["created"] = DateTime.now().toUtc();
-      var ref = await FirebaseFirestore.instance.collection('notes').add(note);
-      id = ref.id;
-    }
-    // return the id of the note to the caller
-    Get.back(result: id);
-  }
-
   /// Clean up the fields before saving
   /// - remove any one-line comment/snippet with just a <br/>
   Map<String, Object?> cleanFields(Map<String, Object?> note) {
@@ -169,6 +137,33 @@ class _EditNoteFormState extends State<EditNoteForm> {
             icon: const Icon(Icons.save),
             iconSize: 36,
           ),
+          PopupMenuButton<int>(
+            onSelected: (v) => v == 1 ? doAddCheck() : doSnippetToChecklist(),
+            itemBuilder: (context) => [
+              const PopupMenuItem<int>(
+                  value: 1,
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_box_outlined),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text("add checked item")
+                    ],
+                  )),
+              const PopupMenuItem<int>(
+                  value: 2,
+                  child: Row(
+                    children: [
+                      Icon(Icons.checklist),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text("snippet to checklist")
+                    ],
+                  )),
+            ],
+          ),
         ],
       ),
       body: Form(
@@ -178,33 +173,18 @@ class _EditNoteFormState extends State<EditNoteForm> {
           constraints: const BoxConstraints(maxHeight: 800),
           child: Column(
             children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextFormField(
-                        controller: _titleCtl,
-                        decoration: InputDecoration(
-                          hintText: 'A title for the note',
-                          labelText: 'Title',
-                          fillColor: Colors.yellow[50],
-                        ),
-                      ),
-                    ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  controller: _titleCtl,
+                  decoration: InputDecoration(
+                    hintText: 'A title for the note',
+                    labelText: 'Title',
+                    fillColor: Colors.yellow[50],
                   ),
-                  // only show the add checklist button if there is no checklist. Never show in iFrame
-                  if (_note.checklist.isEmpty && !_showChecklist && !widget.iFrame)
-                    Tooltip(
-                      message: 'Add a checklist',
-                      child: IconButton(
-                        onPressed: doAddCheck,
-                        icon: const Icon(Icons.add_box_outlined),
-                      ),
-                    ),
-                ],
+                ),
               ),
+              // only show the add checklist button if there is no checklist. Never show in iFrame
               if ((_note.id != null && _note.checklist.isNotEmpty) || _showChecklist)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -237,20 +217,49 @@ class _EditNoteFormState extends State<EditNoteForm> {
                   ),
                 ),
               ),
+
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: _snippetCtl,
-                    expands: true,
-                    minLines: null,
-                    maxLines: null,
-                    decoration: InputDecoration(
-                      hintText: 'Snippet of text from a web page',
-                      labelText: 'Snippet',
-                      fillColor: Colors.yellow[50],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextFormField(
+                          controller: _snippetCtl,
+                          expands: true,
+                          minLines: null,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Snippet of text from a web page',
+                            labelText: 'Snippet',
+                            fillColor: Colors.yellow[50],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    // only show the add checklist button if there is no checklist. Never show in iFrame
+                    if (_note.checklist.isEmpty && !_showChecklist && !widget.iFrame)
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Tooltip(
+                            message: 'Add a checked item',
+                            child: IconButton(
+                              onPressed: doAddCheck,
+                              icon: const Icon(Icons.add_box_outlined),
+                            ),
+                          ),
+                          Tooltip(
+                            message: 'Copy snippet as a checklist',
+                            child: IconButton(
+                              onPressed: doSnippetToChecklist,
+                              icon: const Icon(Icons.checklist),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
               Padding(
@@ -271,6 +280,43 @@ class _EditNoteFormState extends State<EditNoteForm> {
     );
   }
 
+  Future<void> _saveNoteToFirebase(Map<String, Object?> note) async {
+    // if note has the key "id", add 1
+    // else add the note
+
+    late String id;
+    if (note.containsKey("id")) {
+      // update existing note
+      id = note["id"].toString();
+
+      // remove the id from the note, as firebase uses it as a doc reference
+      note.remove("id");
+
+      // we are saving so nullify the lockedBy field
+      note["lockedBy"] = null;
+      note["lockedTime"] = null;
+      note = cleanFields(note);
+
+      // serialise notes["checklist"] to a list of maps
+      if (note.containsKey('checklist') && note['checklist'] != null) {
+        // serialise notes["checklist"] to a list of maps
+        List<CheckItem> checklist = note["checklist"] as List<CheckItem>;
+        List serialList = checklist.map((item) => item.toJson()).toList();
+        note["checklist"] = serialList;
+      }
+      await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
+    } else {
+      // add new note
+      final uid = Get.find<AuthCtl>().user!.uid;
+      note = cleanFields(note);
+
+      // add in the user(owner) and created fields
+      note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
+      note["created"] = DateTime.now().toUtc();
+      await FirebaseFirestore.instance.collection('notes').add(note);
+    }
+  }
+
   /// Save the note
   /// and clean up the fields before saving
   void saveNote() {
@@ -285,6 +331,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
         'url': _urlCtl.text
       });
       platformPluginMethod();
+      Get.back(result: _note.id);
     }
   }
 
@@ -307,5 +354,27 @@ class _EditNoteFormState extends State<EditNoteForm> {
   doChangeCheck() {
     // notify parent
     widget.onChanged?.call();
+  }
+
+  /// paste a set of lines into the checklist from the clipboard
+  Future<void> doSnippetToChecklist() async {
+    if (_note.snippet == null) {
+      Get.snackbar("Error", "No snippet found");
+      return;
+    }
+    final List<String> lines = (_note.snippet ?? "").split(RegExp(r'\n|\<br\/>'));
+    // remove any blank lines
+    lines.removeWhere((element) => element.isEmpty);
+    // ad items to c hecklist
+    for (var item in lines) {
+      // only add if not already present
+      if (!_note.checklist.any((element) => element.title == item)) {
+        _note.checklist.add(CheckItem.fromTitle(item));
+      }
+    }
+    // save to db
+    await _saveNoteToFirebase({'id': _note.id, 'checklist': _note.checklist, 'snippet': null});
+    setState(() {});
+    doChangeCheck();
   }
 }
