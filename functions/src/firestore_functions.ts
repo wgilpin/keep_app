@@ -105,7 +105,7 @@ export const updateNote = onDocumentUpdated('notes/{noteId}', (event) => {
         })
         // record the update time to the user record
         getFirestore().collection('users').doc(newValue?.user.id).update({
-          lastUpdated: now,
+          lastUpdated: Timestamp.now(),
         })
       }
       logger.debug('note onUpdate - updating embeddings', event.params.noteId)
