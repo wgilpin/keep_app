@@ -49,7 +49,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
     // if we are editing an existing note, then populate the form with the existing values
     _titleCtl = TextEditingController(text: _note.title);
     _commentCtl = TextEditingController(text: _note.comment);
-    _snippetCtl = TextEditingController(text: _note.snippet);
+    _snippetCtl = TextEditingController(text: replaceBreaksWithNewlines(_note.snippet));
     _urlCtl = TextEditingController(text: _note.url);
 
     // if we are creating a new note, then populate the form with the supplied values
@@ -121,11 +121,12 @@ class _EditNoteFormState extends State<EditNoteForm> {
       return lines.first;
     }
 
-    // Join all lines with <br/>, excluding the last line
-    String newText = lines.sublist(0, lines.length - 1).join('<br/>');
+    return text.replaceAll(RegExp(r'\n'), '<br/>');
+  }
 
-    // Add the last line without <br/>
-    return '$newText<br/>${lines.last}';
+  /// Replace all <br/> tags with newlines
+  String replaceBreaksWithNewlines(String? text) {
+    return (text ?? "").replaceAll(RegExp(r'<br/>'), '\n');
   }
 
   @override

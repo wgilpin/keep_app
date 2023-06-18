@@ -196,7 +196,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                       ),
                     )
                   ]
-                : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+                : getRelatedColumn(snapshot.data),
           ),
         ],
       ),
@@ -219,7 +219,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                     )),
                   )
                 ]
-              : getRelatedColumn(snapshot.data as List<Map<String, String>>),
+              : getRelatedColumn(snapshot.data),
         ),
       ]),
     );
@@ -239,32 +239,35 @@ class _DisplayNoteState extends State<DisplayNote> {
     });
   }
 
-  getRelatedColumn(List<Map<String, String>> related) {
-    return related.isNotEmpty
-        ? related
-            .map(
-              (r) => Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: SizedBox(
-                  width: 300,
-                  child: SmallNoteCard(
-                    r["title"] ?? "Empty Note",
-                    onTapped: () => onCardTapped(r["id"]),
-                  ),
-                ),
+  getRelatedColumn(snap) {
+    const noNotes = [
+      Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Center(
+            child: Text(
+          "No related notes",
+          style: TextStyle(fontSize: 24),
+        )),
+      )
+    ];
+    if (snap == null || snap.isEmpty) {
+      return noNotes;
+    }
+    List<Map<String, String>> related = snap as List<Map<String, String>>;
+    return related
+        .map(
+          (r) => Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: SizedBox(
+              width: 300,
+              child: SmallNoteCard(
+                r["title"] ?? "Empty Note",
+                onTapped: () => onCardTapped(r["id"]),
               ),
-            )
-            .toList()
-        : [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(
-                  child: Text(
-                "No related notes",
-                style: TextStyle(fontSize: 24),
-              )),
-            )
-          ];
+            ),
+          ),
+        )
+        .toList();
   }
 
   void doDelete() {
