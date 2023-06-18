@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/custom_error_page.dart';
 import 'package:keep_app/pageNotFound.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
 import 'package:keep_app/src/notes.dart';
@@ -116,6 +117,12 @@ class _MyAppState extends State<MyApp> {
       initialBinding: AppBindings(),
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),
+      builder: (BuildContext context, Widget? widget) {
+        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+          return CustomError(errorDetails: errorDetails);
+        };
+        return widget!;
+      },
       // static routes
       routes: const {},
       onGenerateRoute: generateRoute,
