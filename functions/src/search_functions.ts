@@ -208,9 +208,9 @@ export const doTextSearch = async function(searchText: string, maxResults: numbe
   for (const snap of notes.docs) {
     const note = snap.data()
     if (
-      note.title.toLowerCase().includes(searchTextLower) ||
-        note.comment.toLowerCase().includes(searchTextLower) ||
-        note.snippet.toLowerCase().includes(searchTextLower)
+      (note.title??'').toLowerCase().includes(searchTextLower) ||
+        (note.comment??'').toLowerCase().includes(searchTextLower) ||
+        (note.snippet??'').toLowerCase().includes(searchTextLower)
     ) {
       results.push([snap.id, note.title])
     }
