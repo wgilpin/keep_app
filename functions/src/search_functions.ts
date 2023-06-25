@@ -3,7 +3,7 @@ import {onCall} from 'firebase-functions/v2/https'
 import {logger} from 'firebase-functions'
 import {EmbeddingsRecord, getNoteEmbeddings, getNoteSimilarity, getTextEmbedding} from './embeddings_functions'
 
-const THRESHOLD = 0.2
+const THRESHOLD = 0.25
 const MAX_CACHE_SIZE = 20
 
 
