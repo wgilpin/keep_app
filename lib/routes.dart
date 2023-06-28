@@ -26,11 +26,12 @@ MaterialPageRoute? generateRoute(RouteSettings settings) {
           // Pass it to EditNoteForm.
           builder: (_) => LoginPage(editArgs: args));
     }
+    final title = removeNumberAndYouTube(args["title"]);
     return MaterialPageRoute(
         // Pass it to EditNoteForm.
         builder: (_) => EditNoteForm(
               null,
-              title: args["title"],
+              title: title,
               snippet: args["snippet"],
               comment: args["comment"],
               url: args["url"],
@@ -47,4 +48,17 @@ MaterialPageRoute? generateRoute(RouteSettings settings) {
     });
   }
   return null; //
+}
+
+/// remove boilerplate from youtube titles
+/// title of form "(4) Video Title - YouTube" -> "Video Title"
+String? removeNumberAndYouTube(String? input) {
+  if (input == null) return null;
+  // Regular expression pattern to match the number in brackets and "YouTube"
+  RegExp regex = RegExp(r"\(\d+\)\s|\s-\sYouTube$");
+
+  // Remove the number and "YouTube" from the string
+  String result = input.replaceAll(regex, '');
+
+  return result.trim();
 }
