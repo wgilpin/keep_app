@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:keep_app/src/controllers/auth_controller.dart';
 
 class Note {
   String? id;
@@ -58,6 +56,16 @@ class Note {
     }
   }
 
+  // get all checked items in checklist
+  List<CheckItem> get checked {
+    return checklist.where((item) => item.checked).toList();
+  }
+
+  // get all UNchecked items in checklist
+  List<CheckItem> get unchecked {
+    return checklist.where((item) => !item.checked).toList();
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       if (title != null) "name": title,
@@ -70,6 +78,12 @@ class Note {
       'shared': isShared,
       "isPinned": isPinned,
     };
+  }
+
+  // change note from checked to unchecked or v.v.
+  void toggleCheckItem(CheckItem item) {
+    int index = checklist.indexWhere((element) => element.key == item.key);
+    checklist[index].checked = !checklist[index].checked;
   }
 }
 
@@ -99,21 +113,4 @@ class CheckItem {
       "key": key.toString(),
     };
   }
-}
-
-Future<Note> getNote(id) async {
-  final doc = await FirebaseFirestore.instance.collection('notes').doc(id).get();
-  return Note.fromSnapshot(doc);
-}
-
-Future<List<Note>> getAllNotes() async {
-  // const userRef = getFirestore().collection('users').doc(uid)
-  // const res = await getFirestore().collection('notes').where('user', '==', userRef).get()
-  String? uid = Get.find<AuthCtl>().user?.uid;
-  if (uid == null) {
-    return [];
-  }
-  final db = FirebaseFirestore.instance;
-  final snap = await db.collection('notes').where("user", isEqualTo: db.doc("/users/$uid")).get();
-  return snap.docs.map((doc) => Note.fromSnapshot(doc, includeRelated: false)).toList();
 }
