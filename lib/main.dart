@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:keep_app/custom_error_page.dart';
 import 'package:keep_app/pageNotFound.dart';
 import 'package:keep_app/routes.dart';
 import 'package:keep_app/src/views/edit_page.dart';
@@ -41,11 +40,10 @@ Future<void> main() async {
   }
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    print(details.toString());
+    print('presentError ${details.toString()}');
   };
   PlatformDispatcher.instance.onError = (error, stack) {
-    print(error.toString());
-    print(stack.toString());
+    print('PlatformDispatcher error ${error.toString()}');
     return true;
   };
   print('App started');
@@ -114,9 +112,9 @@ class _MyAppState extends State<MyApp> {
       theme: makeTheme(),
       scrollBehavior: MyCustomScrollBehavior(),
       builder: (BuildContext context, Widget? widget) {
-        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
-          return CustomError(errorDetails: errorDetails);
-        };
+        // ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+        //   return CustomError(errorDetails: errorDetails);
+        // };
         return widget!;
       },
       // static routes
