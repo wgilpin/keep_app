@@ -197,7 +197,7 @@ class _DisplayNoteState extends State<DisplayNote> {
                       ),
                     )
                   ]
-                : getRelatedColumn(snapshot.data),
+                : getRelatedNotesWidgets(snapshot.data),
           ),
         ],
       ),
@@ -225,12 +225,13 @@ class _DisplayNoteState extends State<DisplayNote> {
                     )),
                   )
                 ]
-              : getRelatedColumn(snapshot.data),
+              : getRelatedNotesWidgets(snapshot.data),
         ),
       ]),
     );
   }
 
+  /// get the related notes from the backend
   Future<List<Map<String, String>>> getRelatedNotes() async {
     // return [note, note, note, note, note, note];
 
@@ -238,26 +239,30 @@ class _DisplayNoteState extends State<DisplayNote> {
     return related;
   }
 
+  /// open the tapped note
   onCardTapped(noteId) async {
     debugPrint("displayNote.onCardTapped");
-    Get.off(DisplayNote(noteId));
+    // Prevent duplicates false or GetX ignores the change
+    Get.off(DisplayNote(noteId), preventDuplicates: false);
   }
 
-  getRelatedColumn(snap) {
-    const noNotes = [
-      Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Center(
-            child: Text(
-          "No related notes",
-          style: TextStyle(fontSize: 24),
-        )),
-      )
-    ];
+  /// get the related notes as a list of widgets
+  List<Widget> getRelatedNotesWidgets(snap) {
     if (snap == null || snap.isEmpty) {
-      return noNotes;
+      // no note is loaded yet
+      return [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Center(
+              child: Text(
+            "No related notes",
+            style: TextStyle(fontSize: 24),
+          )),
+        )
+      ];
     }
-    List<Map<String, String>> related = snap as List<Map<String, String>>;
+    final related = snap as List<Map<String, String>>;
+    // map each related note to a SmallNoteCard
     return related
         .map(
           (r) => Padding(
@@ -274,12 +279,14 @@ class _DisplayNoteState extends State<DisplayNote> {
         .toList();
   }
 
+  /// Delete a note
   void doDelete() {
     debugPrint("DisplayNote.doDelete");
     Get.find<NoteController>().delete(noteCtl.note!.id!);
     Get.back();
   }
 
+  /// Display the delete confirmation dialog
   void deleteAfterConfirm(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
@@ -315,6 +322,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     setState(() {});
   }
 
+  /// Show the dialog to create a new checklist item
   void doAddCheck() {
     SimpleDialog dialog = SimpleDialog(
       elevation: 10,
@@ -354,6 +362,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     );
   }
 
+  /// Save the new checklist item
   void saveNewItem() {
     if (_checkController.text.isNotEmpty) {
       noteCtl.addCheckItem(_checkController.text);
