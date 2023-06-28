@@ -48,6 +48,7 @@ class _CheckListState extends State<CheckList> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Is there a comment?
             if (widget.showComment && _note.comment != null && _note.comment!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -58,19 +59,24 @@ class _CheckListState extends State<CheckList> {
                   style: const TextStyle(fontSize: 16),
                 ),
               ),
+            // Is there a checklist?
             if (_note.checklist.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
                 child: Column(
                   children: [
+                    // first the unchecked items
                     getChecklist(note.unchecked, widget.showChecked, note.id!),
                     if (widget.showChecked) showEditBox(),
+                    // if both checked and unchecked items, show a divider
                     if (widget.showChecked && note.checked.isNotEmpty)
                       const Divider(
                         height: 8,
                         thickness: 2,
                       ),
+                    // then the checked items if needed
                     if (widget.showChecked) getChecklist(note.checked, true, note.id!),
+                    // if we're hiding checked items, show a count of the hidden ones
                     if (!widget.showChecked && note.checked.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -84,7 +90,6 @@ class _CheckListState extends State<CheckList> {
                   ],
                 ),
               ),
-            if (_note.checklist.isEmpty) showEditBox(),
           ],
         );
       },

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,6 +34,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     noteCtl = Get.put<NoteController>(NoteController(widget.noteId, doGetRelated));
   }
 
+  /// Toggle the pinned state of the note
   void doPinnedChange(String id, bool state) {
     debugPrint('DisplayNote.doPinnedChange');
 
@@ -71,6 +73,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     );
   }
 
+  /// The UI Widget for the large display of the current note
   Widget mainCard() {
     return Container(
       constraints: const BoxConstraints(
@@ -139,6 +142,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     );
   }
 
+  /// Load the note into the edit page and navigate to it
   Future<void> doEditCard() async {
     //  if the note is locked by another user, can't edit it
     final uid = Get.find<AuthCtl>().user!.uid;
@@ -165,18 +169,20 @@ class _DisplayNoteState extends State<DisplayNote> {
     Get.to(() => EditNoteForm(
           noteCtl.note,
           onChanged: doChanged,
-        ))?.then(
-      (updatedNoteID) async {
-        if (updatedNoteID != null) {
-          Get.find<NoteController>().update();
-          setState(() {});
-          // if the parent widget supplied a callback, call it
-          debugPrint("DisplayNote.onPressed");
-        }
-      },
-    );
+        ))?.then(postEdit);
   }
 
+  /// After a note has been edited, update state
+  FutureOr<void> postEdit(updatedNoteID) async {
+    if (updatedNoteID != null) {
+      Get.find<NoteController>().update();
+      setState(() {});
+      // if the parent widget supplied a callback, call it
+      debugPrint("DisplayNote.onPressed");
+    }
+  }
+
+  /// Show the main card above related notes
   Widget columnView(AsyncSnapshot<Object> snapshot) {
     return SingleChildScrollView(
       child: Column(
@@ -189,8 +195,10 @@ class _DisplayNoteState extends State<DisplayNote> {
                       child: Padding(
                         padding: EdgeInsets.only(top: 20.0),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text('Loading related notes...'),
+                            SizedBox(width: 20),
                             CircularProgressIndicator(),
                           ],
                         ),
@@ -204,6 +212,7 @@ class _DisplayNoteState extends State<DisplayNote> {
     );
   }
 
+  /// Show the main card next to related notes
   Widget fullWidth(AsyncSnapshot<Object> snapshot) {
     return SingleChildScrollView(
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -217,8 +226,10 @@ class _DisplayNoteState extends State<DisplayNote> {
                         child: Padding(
                       padding: EdgeInsets.only(top: 20.0),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('Loading related notes...'),
+                          SizedBox(height: 20),
                           CircularProgressIndicator(),
                         ],
                       ),
@@ -371,14 +382,14 @@ class _DisplayNoteState extends State<DisplayNote> {
     Get.back();
   }
 
-  void doShare() {
-    // set the shared flag on the note in firebase
-    FirebaseFirestore.instance.collection("notes").doc(noteCtl.note!.id!).update({"shared": true}).then((value) {
-      setState(() {
-        noteCtl.note!.isShared = true;
-      });
-      doChanged();
+  /// Mark a note as shareable, and copy the share URL to the clipboard
+  Future<void> doShare() async {
+    // set the shared flag on the note in the db
+    await noteCtl.share();
+    setState(() {
+      noteCtl.note!.isShared = true;
     });
+    doChanged();
     String url = makeShareURL(noteCtl.note!.id!);
     debugPrint('DisplayNote.doShare: $url');
     Clipboard.setData(ClipboardData(text: url));
@@ -386,8 +397,7 @@ class _DisplayNoteState extends State<DisplayNote> {
         snackPosition: SnackPosition.BOTTOM);
   }
 
-  Future<void> initNote() async {}
-
+  /// Get related notes from the backend then update the UI
   doGetRelated() async {
     getRelatedNotes().then((_) {
       setState(() {});
