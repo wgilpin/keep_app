@@ -38,4 +38,8 @@ class NoteController extends GetxController {
     ref.delete();
     refresh();
   }
+
+  Future<void> share() {
+    return ref.update({"shared": true});
+  }
 }
