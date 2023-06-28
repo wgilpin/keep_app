@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/controllers/notes_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/checklist.dart';
 
@@ -193,9 +194,8 @@ class _EditNoteFormState extends State<EditNoteForm> {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CheckList(
-                        note: _note,
+                        noteId: _note.id!,
                         showChecked: true,
-                        onChanged: doChangeCheck,
                         showComment: false,
                       ),
                     ),
@@ -304,7 +304,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
         List serialList = checklist.map((item) => item.toJson()).toList();
         note["checklist"] = serialList;
       }
-      await FirebaseFirestore.instance.collection('notes').doc(id).update(note);
+      return Get.find<NotesController>().updateNoteFromMap(id, note);
     } else {
       // add new note
       final uid = Get.find<AuthCtl>().user!.uid;
@@ -313,7 +313,7 @@ class _EditNoteFormState extends State<EditNoteForm> {
       // add in the user(owner) and created fields
       note["user"] = FirebaseFirestore.instance.doc("/users/$uid");
       note["created"] = DateTime.now().toUtc();
-      await FirebaseFirestore.instance.collection('notes').add(note);
+      return Get.find<NotesController>().createNoteFromMap(note);
     }
   }
 

@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:keep_app/src/controllers/note_controller.dart';
+import 'package:keep_app/src/controllers/database.dart';
+import 'package:keep_app/src/controllers/notes_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/card_grid.dart';
@@ -19,20 +19,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
-  Stream<QuerySnapshot> _notesStream = NoteController.getData();
-  Future<List<Note>> _notesList = Future.value([]);
   bool _loading = false;
+  final List<String> _searchResults = [];
 
   @override
   void initState() {
     super.initState();
-    _notesStream = NoteController.getData();
-    _notesList = Future.value([]);
     debugPrint("Homepage.initState");
   }
 
   void doChanged() {
-    _notesStream = NoteController.getData();
     setState(() {});
   }
 
@@ -40,10 +36,8 @@ class _HomePageState extends State<HomePage> {
     debugPrint("CardGrid.onPinned");
     // write note to firestore
     debugPrint('toggle pinned for $noteId}}');
-    await FirebaseFirestore.instance.collection("notes").doc(noteId).update({"isPinned": value});
-    setState(() {
-      _notesStream = NoteController.getData();
-    });
+    await Database().updateNotePinned(noteId, value);
+    setState(() {});
   }
 
   @override
@@ -105,7 +99,7 @@ class _HomePageState extends State<HomePage> {
             : Row(
                 children: [
                   if (isWide) const LeftNavigation(0),
-                  Expanded(child: (_searchController.text.isEmpty ? getStreamGrid() : getFutureGrid())),
+                  Expanded(child: getStreamGrid()),
                 ],
               ),
       ),
@@ -122,15 +116,17 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> doSearch(BuildContext context) async {
     if (_searchController.text.isEmpty) {
-      _notesStream = NoteController.getData();
-      setState(() {});
+      setState(() {
+        _searchResults.clear();
+        _loading = false;
+      });
     } else {
       setState(() {
         _loading = true;
       });
       Recommender.textSearch(_searchController.text, 10, context).then((results) {
-        _notesList = NoteController.setData(results.keys.toList());
         setState(() {
+          _searchResults.addAll(results.keys.toList());
           _loading = false;
         });
       });
@@ -138,42 +134,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   getStreamGrid() {
-    return StreamBuilder<QuerySnapshot>(
-        stream: _notesStream,
-        builder: (context, snapshot) {
-          debugPrint('Homepage streambuilder rebuild');
-
-          debugPrint("Homepage.build ${snapshot.connectionState}");
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+    return GetX<NotesController>(
+      init: Get.find<NotesController>(),
+      builder: (NotesController noteController) {
+        if (noteController.notes.value.isNotEmpty) {
+          if (_searchResults.isNotEmpty) {
+            return SafeArea(
+              child: CardGrid(
+                noteController.notes.value.where((note) => _searchResults.contains(note.id)).toList(),
+                onPinnedNote,
+              ),
+            );
           }
-          if (snapshot.hasError) {
-            debugPrint('Snapshot error: ${snapshot.error}');
-            return const Center(child: Text("Error loading notes"));
-          }
-          if (snapshot.connectionState == ConnectionState.active) {
-            List<Note> notes = snapshot.data!.docs.map((n) => Note.fromSnapshot(n)).toList();
-            return SafeArea(child: CardGrid(notes, doChanged, onPinnedNote));
-          }
-          return const Center(child: Text("No notes found"));
-        });
-  }
-
-  getFutureGrid() {
-    return FutureBuilder<List<Note>>(
-        future: _notesList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            debugPrint('Snapshot error: ${snapshot.error}');
-            return const Center(child: Text("Error loading notes"));
-          }
-          if (snapshot.hasData) {
-            return SafeArea(child: CardGrid(snapshot.data!, doChanged, onPinnedNote));
-          }
-          return const Center(child: Text("No notes found"));
-        });
+          return SafeArea(child: CardGrid(noteController.notes.value, onPinnedNote));
+        }
+        return const Center(child: Text("No notes found"));
+      },
+    );
   }
 }

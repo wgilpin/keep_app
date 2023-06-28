@@ -133,7 +133,7 @@ class _NoteCardState extends State<NoteCard> {
                   if (widget._note.url != null && widget._note.url!.startsWith("https://www.youtube.com"))
                     heroImage(widget.interactable),
                   if (widget._note.checklist.isNotEmpty)
-                    CheckList(note: widget._note, showChecked: widget.interactable, onChanged: doChange),
+                    CheckList(noteId: widget._note.id!, showChecked: widget.interactable),
                   CardText(widget._note, widget.interactable),
                 ],
               ),

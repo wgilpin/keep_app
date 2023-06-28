@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
+import 'package:keep_app/src/controllers/notes_controller.dart';
 import 'package:keep_app/src/notes.dart';
 import 'package:keep_app/src/views/bottom_nav.dart';
 import 'package:keep_app/src/views/left_navigation.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
-import 'package:to_csv/to_csv.dart' as export_CSV;
+import 'package:to_csv/to_csv.dart' as export_csv;
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -130,7 +131,7 @@ class ProfilePage extends StatelessWidget {
   Future<void> doDownload() async {
     // TODO: test on mobile
     try {
-      List<Note> notes = await getAllNotes();
+      List<Note> notes = Get.find<NotesController>().notes.value;
       List<List<String>> res;
       res = notes
           .map((n) => [
@@ -142,7 +143,7 @@ class ProfilePage extends StatelessWidget {
                 n.created.toString(),
               ])
           .toList();
-      export_CSV.myCSV(["ID", "Title", "Comment", "Snippet", "URL", "Created"], res);
+      export_csv.myCSV(["ID", "Title", "Comment", "Snippet", "URL", "Created"], res);
       Get.snackbar("Downloading", "Check your downloads folder");
     } on Exception catch (e) {
       Get.snackbar("Error preparing data", e.toString(),

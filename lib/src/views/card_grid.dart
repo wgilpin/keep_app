@@ -8,18 +8,16 @@ import 'package:keep_app/src/views/display_note.dart';
 import 'package:keep_app/src/views/note_card.dart';
 
 class CardGrid extends StatelessWidget {
-  CardGrid(List<Note> notes, this.onUpdate, this.onPinned, {super.key}) : _notes = notes;
+  const CardGrid(List<Note> notes, this.onPinned, {super.key}) : _notes = notes;
 
-  late final Function()? onUpdate;
-  late final Function(String, bool)? onPinned;
+  final Function(String, bool)? onPinned;
   final List<Note> _notes;
 
   // open the note in a new page when tapped
   onNoteTapped(note) {
     debugPrint("CardGrid.onNoteTapped");
     Get.to(() => DisplayNote(
-          note,
-          onChanged: doUpdate,
+          note.id,
           onPinned: onPinned,
         ));
   }
@@ -56,7 +54,6 @@ class CardGrid extends StatelessWidget {
 
   void doChange() {
     debugPrint('CardGrid.doChange');
-    onUpdate?.call();
   }
 
   // sort order is pinned notes by update order, then unpinned notes by update order
@@ -80,6 +77,5 @@ class CardGrid extends StatelessWidget {
 
   doUpdate() {
     debugPrint('CardGrid.doUpdate');
-    onUpdate?.call();
   }
 }

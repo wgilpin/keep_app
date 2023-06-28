@@ -6,19 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
-import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/controllers/note_controller.dart';
+import 'package:keep_app/src/utils/utils.dart';
 import 'package:keep_app/src/views/edit_page.dart';
 import 'package:keep_app/src/views/home_page.dart';
 import 'package:keep_app/src/views/note_card.dart';
 import 'package:keep_app/src/views/recommend.dart';
 
-import '../utils/utils.dart';
-
 class DisplayNote extends StatefulWidget {
-  const DisplayNote(Note note, {this.onChanged, this.onPinned, super.key}) : _initialNote = note;
-
-  final Note _initialNote;
-  final Function()? onChanged;
+  const DisplayNote(this.noteId, {this.onPinned, super.key});
+  final String noteId;
   final Function(String, bool)? onPinned;
 
   @override
@@ -28,24 +25,21 @@ class DisplayNote extends StatefulWidget {
 class _DisplayNoteState extends State<DisplayNote> {
   late Future<List<Map<String, String>>> relatedNotes;
   final _checkController = TextEditingController();
-  late bool hasChecklist;
-  late Note _note;
+  late final NoteController noteCtl;
 
   @override
   initState() {
     super.initState();
-    _note = widget._initialNote;
-    relatedNotes = getRelatedNotes();
-    hasChecklist = _note.checklist.isNotEmpty;
+    noteCtl = Get.put<NoteController>(NoteController(widget.noteId, doGetRelated));
   }
 
   void doPinnedChange(String id, bool state) {
     debugPrint('DisplayNote.doPinnedChange');
 
     setState(() {
-      _note.isPinned = state;
+      noteCtl.note?.isPinned = state;
     });
-    widget.onPinned?.call(_note.id!, state);
+    widget.onPinned?.call(id, state);
   }
 
   @override
@@ -65,13 +59,15 @@ class _DisplayNoteState extends State<DisplayNote> {
           ),
         ),
       ),
-      body: FutureBuilder<Object>(
-          future: relatedNotes,
-          builder: (context, snapshot) {
-            return SizedBox(
-                width: min(1200, media.size.width),
-                child: media.size.width < 1200 ? columnView(snapshot) : fullWidth(snapshot));
-          }),
+      body: noteCtl.note == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<Object>(
+              future: getRelatedNotes(),
+              builder: (context, snapshot) {
+                return SizedBox(
+                    width: min(1200, media.size.width),
+                    child: media.size.width < 1200 ? columnView(snapshot) : fullWidth(snapshot));
+              }),
     );
   }
 
@@ -83,55 +79,61 @@ class _DisplayNoteState extends State<DisplayNote> {
       width: 1200,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            NoteCard(
-              _note,
-              onTapped: null,
-              onPinned: doPinnedChange,
-              interactable: true,
-              onChanged: doChanged,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+        child: GetX<NoteController>(
+          init: NoteController(widget.noteId, doGetRelated),
+          initState: (_) {},
+          builder: (noteCtl) {
+            return Column(
               children: [
-                if (!hasChecklist)
-                  Tooltip(
-                    message: 'Add a checklist item',
-                    child: IconButton(
-                      onPressed: doAddCheck,
-                      icon: const Icon(Icons.add_box_outlined),
+                NoteCard(
+                  noteCtl.note!,
+                  onTapped: null,
+                  onPinned: doPinnedChange,
+                  interactable: true,
+                  onChanged: doChanged,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (noteCtl.note!.checklist.isNotEmpty)
+                      Tooltip(
+                        message: 'Add a checklist item',
+                        child: IconButton(
+                          onPressed: doAddCheck,
+                          icon: const Icon(Icons.add_box_outlined),
+                        ),
+                      ),
+                    Tooltip(
+                      message: noteCtl.note!.isShared ? 'Stop sharingthis note' : 'Share this note',
+                      child: IconButton(
+                        onPressed: doShare,
+                        icon: Icon(Icons.share, color: noteCtl.note!.isShared ? Colors.red[900] : null),
+                      ),
                     ),
-                  ),
-                Tooltip(
-                  message: _note.isShared ? 'Stop sharingthis note' : 'Share this note',
-                  child: IconButton(
-                    onPressed: doShare,
-                    icon: Icon(Icons.share, color: _note.isShared ? Colors.red[900] : null),
-                  ),
+                    Tooltip(
+                      message: 'Edit this note',
+                      child: IconButton(
+                        onPressed: () => doEditCard(),
+                        icon: const Icon(Icons.edit),
+                      ),
+                    ),
+                    Tooltip(
+                      message: 'Delete note',
+                      decoration: BoxDecoration(
+                        color: Colors.red[900],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: IconButton(
+                          onPressed: () {
+                            deleteAfterConfirm(context);
+                          },
+                          icon: const Icon(Icons.delete)),
+                    )
+                  ],
                 ),
-                Tooltip(
-                  message: 'Edit this note',
-                  child: IconButton(
-                    onPressed: doEditCard,
-                    icon: const Icon(Icons.edit),
-                  ),
-                ),
-                Tooltip(
-                  message: 'Delete note',
-                  decoration: BoxDecoration(
-                    color: Colors.red[900],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: IconButton(
-                      onPressed: () {
-                        deleteAfterConfirm(context);
-                      },
-                      icon: const Icon(Icons.delete)),
-                )
               ],
-            )
-          ],
+            );
+          },
         ),
       ),
     );
@@ -141,12 +143,12 @@ class _DisplayNoteState extends State<DisplayNote> {
     //  if the note is locked by another user, can't edit it
     final uid = Get.find<AuthCtl>().user!.uid;
     final DateTime now = DateTime.now().toUtc();
-    if (_note.lockedBy != null) {
+    if (noteCtl.note!.lockedBy != null) {
       // get current user
       // if locked by me, fine. If someone else, can't edit until saved or 1 hour has passed
-      if (_note.lockedBy != uid) {
+      if (noteCtl.note!.lockedBy != uid) {
         // is lockedTime more than 1 hour ago?
-        final diff = now.difference(_note.lockedTime!.toDate());
+        final diff = now.difference(noteCtl.note!.lockedTime!.toDate());
         if (diff.inHours < 1) {
           // less than 1 hour, can't edit
           Get.snackbar('Note locked', 'Locked by another for at most another ${diff.inMinutes} minutes ');
@@ -154,28 +156,22 @@ class _DisplayNoteState extends State<DisplayNote> {
         }
       }
       //  we can edit. Lock it for current user
-      debugPrint('DisplayNote.doEditCard Locked ${_note.id}');
+      debugPrint('DisplayNote.doEditCard Locked ${noteCtl.note!.id}');
     }
-    await FirebaseFirestore.instance.collection('notes').doc(_note.id).update({
+    await FirebaseFirestore.instance.collection('notes').doc(noteCtl.note!.id).update({
       'lockedBy': uid,
       'lockedTime': Timestamp.fromDate(now),
     });
     Get.to(() => EditNoteForm(
-          _note,
+          noteCtl.note,
           onChanged: doChanged,
         ))?.then(
       (updatedNoteID) async {
         if (updatedNoteID != null) {
-          // note has been updated, reload it
-          final note = await getNote(updatedNoteID);
-          setState(
-            () {
-              _note = note;
-            },
-          );
+          Get.find<NoteController>().update();
+          setState(() {});
           // if the parent widget supplied a callback, call it
           debugPrint("DisplayNote.onPressed");
-          widget.onChanged?.call();
         }
       },
     );
@@ -192,7 +188,12 @@ class _DisplayNoteState extends State<DisplayNote> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 20.0),
-                        child: CircularProgressIndicator(),
+                        child: Row(
+                          children: [
+                            Text('Loading related notes...'),
+                            CircularProgressIndicator(),
+                          ],
+                        ),
                       ),
                     )
                   ]
@@ -215,7 +216,12 @@ class _DisplayNoteState extends State<DisplayNote> {
                     child: Center(
                         child: Padding(
                       padding: EdgeInsets.only(top: 20.0),
-                      child: CircularProgressIndicator(),
+                      child: Column(
+                        children: [
+                          Text('Loading related notes...'),
+                          CircularProgressIndicator(),
+                        ],
+                      ),
                     )),
                   )
                 ]
@@ -227,16 +233,14 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   Future<List<Map<String, String>>> getRelatedNotes() async {
     // return [note, note, note, note, note, note];
-    final List<Map<String, String>> related = await Recommender.noteSearch(_note, 9, context);
+
+    final List<Map<String, String>> related = await Recommender.noteSearch(widget.noteId, 9, context);
     return related;
   }
 
   onCardTapped(noteId) async {
     debugPrint("displayNote.onCardTapped");
-    _note = await getNote(noteId);
-    setState(() {
-      relatedNotes = getRelatedNotes();
-    });
+    Get.off(DisplayNote(noteId));
   }
 
   getRelatedColumn(snap) {
@@ -272,7 +276,7 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doDelete() {
     debugPrint("DisplayNote.doDelete");
-    FirebaseFirestore.instance.collection('notes').doc(_note.id!).delete();
+    Get.find<NoteController>().delete(noteCtl.note!.id!);
     Get.back();
   }
 
@@ -308,10 +312,7 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doChanged() {
     debugPrint('DisplayNote.doChanged');
-    setState(() {
-      hasChecklist = _note.checklist.isNotEmpty;
-    });
-    widget.onChanged?.call();
+    setState(() {});
   }
 
   void doAddCheck() {
@@ -355,18 +356,7 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void saveNewItem() {
     if (_checkController.text.isNotEmpty) {
-      FirebaseFirestore.instance.collection("notes").doc(_note.id!).update({
-        "checklist": FieldValue.arrayUnion([
-          {"title": _checkController.text, "checked": false}
-        ])
-      }).then((value) {
-        setState(() {
-          CheckItem newItem = CheckItem.fromTitle(_checkController.text);
-          _note.checklist.add(newItem);
-          _checkController.clear();
-        });
-        doChanged();
-      });
+      noteCtl.addCheckItem(_checkController.text);
     }
     // addCheckItem();
     Get.back();
@@ -374,16 +364,25 @@ class _DisplayNoteState extends State<DisplayNote> {
 
   void doShare() {
     // set the shared flag on the note in firebase
-    FirebaseFirestore.instance.collection("notes").doc(_note.id!).update({"shared": true}).then((value) {
+    FirebaseFirestore.instance.collection("notes").doc(noteCtl.note!.id!).update({"shared": true}).then((value) {
       setState(() {
-        _note.isShared = true;
+        noteCtl.note!.isShared = true;
       });
       doChanged();
     });
-    String url = makeShareURL(_note.id!);
+    String url = makeShareURL(noteCtl.note!.id!);
     debugPrint('DisplayNote.doShare: $url');
     Clipboard.setData(ClipboardData(text: url));
     Get.snackbar("Note can be shared", "The link has been copied to the clipboard",
         snackPosition: SnackPosition.BOTTOM);
+  }
+
+  Future<void> initNote() async {}
+
+  doGetRelated() async {
+    getRelatedNotes().then((_) {
+      setState(() {});
+      noteCtl.update();
+    });
   }
 }
