@@ -25,13 +25,6 @@ class AuthCtl extends GetxController {
     super.onInit();
   }
 
-  // _setInitialScreen(User? user) {
-  //   if (user == null) {
-  //     //User Logged out
-  //     Get.to(LoginPage());
-  //   }
-  // }
-
   /// Create a new user with email and password
   Future<void> createUser(String email, String password) async {
     try {
