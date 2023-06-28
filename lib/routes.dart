@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:keep_app/src/controllers/auth_controller.dart';
-import 'package:keep_app/src/notes.dart';
+import 'package:keep_app/src/controllers/notes_controller.dart';
 import 'package:keep_app/src/views/display_shared_note.dart';
 import 'package:keep_app/src/views/edit_page.dart';
 import 'package:keep_app/src/views/login/login_page.dart';
@@ -43,15 +42,8 @@ MaterialPageRoute? generateRoute(RouteSettings settings) {
     final args = Uri.parse(settings.name ?? "").queryParameters;
     // return MaterialPageRoute(builder: (_) => DisplaySharedNoted(args["id"] ?? ""));
     return MaterialPageRoute(builder: (context) {
-      return FutureBuilder(
-          future: FirebaseFirestore.instance.collection('notes').doc(args["id"] ?? "").get(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              Note note = Note.fromSnapshot(snapshot.data!);
-              return DisplaySharedNoted(note);
-            }
-            return const Center(child: CircularProgressIndicator());
-          });
+      final note = Get.find<NotesController>().findNoteById(args["id"] ?? "");
+      return DisplaySharedNoted(note);
     });
   }
   return null; //
