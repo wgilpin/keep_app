@@ -13,7 +13,7 @@ class NotesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    notes.bindStream(Database().noteStream(authCtl.user!.uid));
+    notes.bindStream(Database().noteStream(authCtl.user?.uid ?? ""));
     notesCollection = FirebaseFirestore.instance.collection('notes');
   }
 
