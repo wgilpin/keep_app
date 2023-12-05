@@ -2,7 +2,7 @@ name: keep_app
 description: A new Flutter project.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -39,7 +39,7 @@ dependencies:
   get: ^4.6.5
   flutter_dotenv: ^5.0.2
   cloud_firestore: ^4.7.0
-  flutter_staggered_grid_view: ^0.6.2
+  flutter_staggered_grid_view: ^0.7.0
   flutter_html: ^3.0.0-beta.1
   cloud_functions: ^4.3.0
   url_launcher: ^6.1.11
@@ -47,9 +47,9 @@ dependencies:
     git:
       url: https://github.com/Thogsit/receive_sharing_intent
   flutter_launcher_icons: ^0.13.1
-  google_fonts: ^4.0.5
+  google_fonts: ^6.1.0
   html: ^0.15.3
-  to_csv: ^1.1.1
+  to_csv: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -108,6 +108,6 @@ fonts:
       - asset: fonts/RobotoSlab-Regular.ttf
 
 flutter_launcher_icons:
-  android: 'launcher_icon'
+  android: "launcher_icon"
   ios: true
-  image_path: 'assets/icon/icon48.png'
+  image_path: "assets/icon/icon48.png"
