@@ -53,6 +53,7 @@ class _HomePageState extends State<HomePage> {
             fontSize: 30,
           ),
         ),
+        backgroundColor: Theme.of(context).primaryColorDark,
         actions: <Widget>[
           Container(
             // Add padding around the search bar

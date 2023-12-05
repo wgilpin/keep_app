@@ -13,6 +13,7 @@ class LeftNavigation extends StatelessWidget {
     return NavigationRail(
         selectedIndex: selectedIndex,
         useIndicator: true,
+        indicatorColor: Theme.of(context).primaryColorDark,
         onDestinationSelected: (value) {
           if (value == 1) {
             Get.to(() => const ProfilePage());

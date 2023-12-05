@@ -60,6 +60,7 @@ class _DisplayNoteState extends State<DisplayNote> {
             ),
           ),
         ),
+        backgroundColor: Theme.of(context).primaryColorDark,
       ),
       body: noteCtl.note == null
           ? const Center(child: CircularProgressIndicator())
