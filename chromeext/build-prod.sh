@@ -11,6 +11,12 @@ rmdir ./$OUT_DIR
 # Create the build folder if it doesn't exist
 mkdir -p "$OUT_DIR"
 
+# Check if mustache is installed
+if ! command -v mustache &>/dev/null; then
+  # Install mustache
+  npm install mustache
+fi
+
 # Iterate through the source folder
 for file in "$SOURCE_DIR"/*; do
     if [[ -f "$file" ]]; then
@@ -21,7 +27,7 @@ for file in "$SOURCE_DIR"/*; do
             # Apply Mustache templating
             output_filename="${filename%.mustache}"
             
-            mustache prod.json "$file" > ./"$OUT_DIR/$output_filename"
+            npm exec mustache prod.json "$file" > ./"$OUT_DIR/$output_filename"
             echo "built  $OUT_DIR/$output_filename"
         else
             # Copy the file as is
