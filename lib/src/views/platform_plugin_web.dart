@@ -13,3 +13,14 @@ Object platformPluginMethod() {
     return Object();
   }
 }
+
+Object platformPluginAlert(String message) {
+  // for the chrome extension, send a message to close the popup
+  try {
+    window.alert(message);
+
+    return Object();
+  } catch (e) {
+    return Object();
+  }
+}
