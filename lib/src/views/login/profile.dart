@@ -28,6 +28,7 @@ class ProfilePage extends StatelessWidget {
             fontSize: 30,
           ),
         ),
+        backgroundColor: Theme.of(context).primaryColorDark,
       ),
       body: Row(
         children: [
@@ -47,17 +48,20 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 50),
                   ElevatedButton(
                       onPressed: () => doPassword(context),
-                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      style: ElevatedButton.styleFrom(
+                          fixedSize: const Size(180, 30), backgroundColor: Theme.of(context).primaryColorLight),
                       child: const Text('Change Password')),
                   const SizedBox(height: 30),
                   ElevatedButton(
                       onPressed: doLogout,
-                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      style: ElevatedButton.styleFrom(
+                          fixedSize: const Size(180, 30), backgroundColor: Theme.of(context).primaryColorLight),
                       child: const Text('Logout')),
                   const SizedBox(height: 30),
                   ElevatedButton(
                       onPressed: doDownload,
-                      style: ElevatedButton.styleFrom(fixedSize: const Size(180, 30)),
+                      style: ElevatedButton.styleFrom(
+                          fixedSize: const Size(180, 30), backgroundColor: Theme.of(context).primaryColorLight),
                       child: const Text('Download my data')),
                 ],
               ),
@@ -100,6 +104,7 @@ class ProfilePage extends StatelessWidget {
                       icon: Icon(Icons.send),
                       onPressed: () => sendPasswordChangeLink(emailCtl.text),
                       label: Text("Send me a link"),
+                      style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColorLight),
                     ),
                   ],
                 )

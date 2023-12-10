@@ -77,6 +77,7 @@ class LoginPage extends GetWidget<AuthCtl> {
               fontSize: 30,
             ),
           ),
+          backgroundColor: Theme.of(context).primaryColorDark,
         ),
         body: Center(
           child: SizedBox(
@@ -106,6 +107,8 @@ class LoginPage extends GetWidget<AuthCtl> {
                     SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: doLogin,
+                      style: ElevatedButton.styleFrom(
+                          fixedSize: const Size(180, 30), backgroundColor: Theme.of(context).primaryColorLight),
                       child: Text(
                         'Log in',
                       ),
