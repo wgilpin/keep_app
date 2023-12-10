@@ -1,8 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:keep_app/src/controllers/auth_controller.dart';
 
 /// Class to call the recommender cloud functions
 class Recommender {
@@ -33,8 +30,8 @@ class Recommender {
 
   static Future<List<Map<String, String>>> noteSearch(String noteId, int count, context) async {
     try {
-      final uid = Get.find<AuthCtl>().user!.uid;
-      final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      // final uid = Get.find<AuthCtl>().user!.uid;
+      // final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       // late Timestamp lastUpdated;
       // final data = userSnap.data();
       // if (data != null && data.containsKey('lastUpdated')) {
