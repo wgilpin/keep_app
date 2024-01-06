@@ -13,24 +13,32 @@ class NotesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    notes.bindStream(Database().noteStream(authCtl.user?.uid ?? ""));
+    doFetch();
     notesCollection = FirebaseFirestore.instance.collection('notes');
+  }
+
+  /// Fetch the notes from the database
+  doFetch() {
+    notes.bindStream(Database().noteStream(authCtl.user?.uid ?? ""));
   }
 
   Note findNoteById(String id) {
     return notesList.firstWhere((note) => note.id == id);
   }
 
+  /// Update the note with the given id with the given title and content
   Future<void> updateChecklist(String id, List<CheckItem> checklist) async {
     await notesCollection.doc(id).update({"checklist": checklist.map((e) => e.toJson()).toList()});
     refresh();
   }
 
+  /// Update the note with the given id with the given map content
   Future<void> updateNoteFromMap(String id, Map<String, Object?> map) async {
     await notesCollection.doc(id).update(map);
     refresh();
   }
 
+  /// Factory method to create a new note from a map
   Future<void> createNoteFromMap(Map<String, Object?> note) async {
     await notesCollection.add(note);
     refresh();
