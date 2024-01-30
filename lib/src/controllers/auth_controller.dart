@@ -1,6 +1,7 @@
 //https://www.youtube.com/watch?v=-H-T_BSgfOE
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:keep_app/src/controllers/notes_controller.dart';
 
 /// Controller for authentication
 class AuthCtl extends GetxController {
@@ -38,6 +39,10 @@ class AuthCtl extends GetxController {
   Future<void> login(String email, String password) async {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
+      // get the global controller from getx
+      final notesCtl = Get.find<NotesController>();
+      // call doFetch() from notes controller to update for new user
+      notesCtl.doFetch();
     } catch (e) {
       Get.snackbar("Unable to log in", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
