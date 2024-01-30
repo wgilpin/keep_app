@@ -12,9 +12,9 @@ rmdir ./$OUT_DIR
 mkdir -p "$OUT_DIR"
 
 # Check if mustache is installed
-if ! command -v mustache &>/dev/null; then
-  # Install mustache
-  npm install mustache
+package='mustache'
+if [ `npm list | grep -c $package` -eq 0 ]; then
+    npm install $package --no-shrinkwrap
 fi
 
 # Iterate through the source folder
